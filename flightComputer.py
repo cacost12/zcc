@@ -34,7 +34,7 @@ import sensor_conv
 ####################################################################################
 
 # Serial port timeouts
-if ( sdr_debug ):
+if ( zav_debug ):
     default_timeout = 100 # 100 second timeout
 else:
     default_timeout = 1   # 1 second timeout

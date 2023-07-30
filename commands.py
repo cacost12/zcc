@@ -3,7 +3,7 @@
 # Commands.py -- module with general command line functions                        #
 # Author: Colton Acosta                                                            #
 # Date: 4/16/2022                                                                  #
-# Sun Devil Rocketry Avionics                                                      #
+# Zenith Avionics                                                                  #
 #                                                                                  #
 ####################################################################################
 
@@ -251,7 +251,7 @@ def clearConsole(Args, serialObj):
 # 		connects to a USB device or displays connectivity                          #
 #                                                                                  #
 ####################################################################################
-def comports(Args, serialObj):
+def comports( Args, zavDevice ):
 
 	##############################################################################
 	# Local Variables                                                            #
@@ -281,7 +281,7 @@ def comports(Args, serialObj):
                             command_type 
                            )
 	if ( not parse_check ):
-		return serialObj # user inputs failed parse tests
+		return # user inputs failed parse tests
 
 	##############################################################################
 	# Command Specific Parsing                                                   #
@@ -303,7 +303,7 @@ def comports(Args, serialObj):
 		except ValueError:
 			print( "Error: invalid baudrate. Check that the " +
                   "baudrate is in bits/s and is an integer" )
-			return serialObj
+			return 
 
 	##############################################################################
     # List Option (-l)                                                           #
@@ -322,14 +322,14 @@ def comports(Args, serialObj):
 			else:
 				print( "device info unavailable" )
 		print()
-		return serialObj
+		return 
 
 	##############################################################################
     # Help Option (-h)                                                           #
 	##############################################################################
 	elif ( option == "-h" ):
 		display_help_info( 'comports' )
-		return serialObj
+		return 
 
 	##############################################################################
     # Connect Option (-c)                                                        #
@@ -339,13 +339,13 @@ def comports(Args, serialObj):
 		if   ( not port_supplied     ):
 			print( "Error: no port supplied to comports " +
                    "function" )
-			return serialObj
+			return 
 
 		# Check that baudrate has been supplied
 		elif ( not baudrate_supplied ):
 			print( "Error: no baudrate supplied to comports " +
                    "function" )
-			return serialObj
+			return 
 
 		# Check that inputed port is valid
 		avail_ports = serial.tools.list_ports.comports()
@@ -355,37 +355,36 @@ def comports(Args, serialObj):
 		if ( not (target_port in avail_ports_devices) ):
 			print( "Error: Invalid serial port\n" )
 			comports( ["-l"] )
-			return serialObj
+			return 
 
 		# Initialize Serial Port
-		serialObj.initComport(
+		zavDevice.initComport(
                              baudrate, 
                              target_port, 
                              default_timeout
                              )
 
 		# Connect to serial port
-		connection_status = serialObj.openComport()
+		connection_status = zavDevice.openComport()
 		if( connection_status ):
 			print( "Connected to port " + target_port + 
                    " at " + str(baudrate) + " baud" )
-
-		return serialObj
+		return 
 
 	##############################################################################
     # Disconnect Option (-d)                                                     #
 	##############################################################################
 	elif ( option == "-d" ):
-		connection_status = serialObj.closeComport()
+		connection_status = zavDevice.closeComport()
 		if ( connection_status ):
 			print( "Disconnected from active serial port" )
-			return serialObj
+			return 
 		else: 
 			print( "An error ocurred while closing port " + 
                    target_port )
-			return serialObj
+			return 
 
-	return serialObj
+	return 
 ## comports ##
 
 
@@ -399,18 +398,18 @@ def comports(Args, serialObj):
 #       board                                                                      #
 #                                                                                  #
 ####################################################################################
-def ping( Args, serialObj ):
+def ping( Args, zavDevice ):
 
     # Check for an active serial port connection and valid 
     # options/arguments
-    if ( not serialObj.serialObj.is_open ):
+    if ( not zavDevice.is_active() ):
         print( "Error: no active serial port connection. "  +
                "Run the comports -c command to connect to " +
                "a device" )
-        return serialObj
+        return 
     if   ( len(Args) < 1 ):
         print("Error: no options supplied to ping function")
-        return serialObj
+        return 
     elif ( len(Args) > 2 ):
         print( "Error: too many options/arguments supplied " +
                "to ping function" )
@@ -425,32 +424,32 @@ def ping( Args, serialObj ):
                 timeout_supplied = True
             except ValueError:
                 print( "Error: Invalid ping timeout." )
-                return serialObj
+                return 
 
         # Help option
         if ( option == "-h" ):
             display_help_info( 'ping' )
-            return serialObj
+            return 
 
         # Ping option
         elif ( option == "-t" ):
             # Check for valid serial port connection
-            if ( not serialObj.serialObj.is_open ):
+            if ( not zavDevice.is_active() ):
                 print( "Error: no active serial port "    +
                        "connection. Run the comports -c " +
                        "command to connect to a device" )
-                return serialObj
+                return 
 
             # Set timeout
-            serialObj.timeout = input_timeout
-            serialObj.configComport()
+            zavDevice.timeout = input_timeout
+            zavDevice.configComport()
 
             # Ping
             opcode = b'\x01'
             ping_start_time = time.time()
-            serialObj.sendByte( opcode )
+            zavDevice.sendByte( opcode )
             print( "Pinging ..." )
-            pingData = serialObj.serialObj.read()
+            pingData = zavDevice.readbyte()
             if ( pingData == b'' ):
                 print( "Timeout expired. No device " +
                        "response recieved." )
@@ -473,12 +472,12 @@ def ping( Args, serialObj ):
                                                            ping_time
                                                            )
                          )
-            return serialObj
+            return 
 
         # Ping option 
         else:
             print("Error: invalid option supplied to ping function")
-            return serialObj
+            return 
 ## ping ##
 
 
@@ -491,7 +490,7 @@ def ping( Args, serialObj ):
 # 		establish a serial connection with an SDR board                            #
 #                                                                                  #
 ####################################################################################
-def connect( Args, serialObj ):
+def connect( Args, zavDevice ):
 
 	##############################################################################
 	# local variables                                                            #
@@ -524,7 +523,7 @@ def connect( Args, serialObj ):
                             command_type 
                            )
 	if ( not parse_check ):
-		return serialObj # user inputs failed parse tests
+		return # user inputs failed parse tests
 	user_option = Args[0]
 	if ( len(Args) > 1 ):
 		user_port = Args[1]
@@ -534,64 +533,64 @@ def connect( Args, serialObj ):
 	##############################################################################
 
 	# Check if there is an active serial port
-	if ( serialObj.is_active() and user_option == '-p' ):
-		print("Error: Serial port " + serialObj.comport + 
+	if ( zavDevice.is_active() and user_option == '-p' ):
+		print("Error: Serial port " + zavDevice.comport + 
                "is active. Disconnect from the active" +
                " serial port before connecting" )
-		return serialObj	
-	elif ( (not serialObj.is_active()) and user_option == '-d' ):
+		return 
+	elif ( (not zavDevice.is_active()) and user_option == '-d' ):
 		print( 'Error: No active serial port to disconnect from' )
-		return serialObj
+		return 
 
 	# Check for valid serial port
 	if ( len(Args) > 1 ):
-		available_ports = serialObj.list_ports()
+		available_ports = zavDevice.list_ports()
 		if ( not (user_port in available_ports) ):
 			print( "Error: Invalid serial port. Valid ports:" )
 			for port_num, port in enumerate( available_ports ):
 				print( "\t" + port )
-			return serialObj
+			return 
 	else:
 		if ( user_option == '-p' and
 		     len(Args)   == 1):
 			print( "Error: No serial port supplied " )
-			return serialObj
+			return 
 
 	##############################################################################
     # Help Option (-h)                                                           #
 	##############################################################################
 	if ( user_option == '-h' ):
 		display_help_info( "connect" )
-		return serialObj
+		return 
 
 	##############################################################################
     # Port Option (-p)                                                           #
 	##############################################################################
 	elif ( user_option == '-p' ):
 		# Open the serial comport
-		serialObj = comports(
+		zavDevice = comports(
                             ['-c', user_port, '921600'], 
                             serialObj
                             )
 		
 		# Send the connect opcode 
-		serialObj.sendByte( opcode )
+		zavDevice.sendByte( opcode )
 
 		# Get the board identifier 
-		controller_response = serialObj.readByte()
+		controller_response = zavDevice.readByte()
 		if ( (controller_response == b''                    ) or
              (not (controller_response in controller_codes) ) ):
 			print( "Controller connection was unsuccessful." )
-			serialObj = comports( ['-d'], serialObj )
-			return serialObj
+			comports( ['-d'], zavDevice )
+			return 
 		else:
 			# Get the firmware version if supported
 			if ( controller_descriptions[controller_response] in 
 			     firmware_id_supported_boards ):
-				firmware_version = firmware_ids[serialObj.readByte()]
+				firmware_version = firmware_ids[zavDevice.readByte()]
 
 			# Set global controller variable 
-			serialObj.set_controller(
+			zavDevice.set_controller(
 						controller_descriptions[controller_response],
 					    firmware_version	
 									    )
@@ -599,18 +598,18 @@ def connect( Args, serialObj ):
             # Display connection info									
 			print( "Connection established with " + 
                     controller_descriptions[controller_response] )
-			if ( serialObj.controller in firmware_id_supported_boards ):
+			if ( zavDevice.controller in firmware_id_supported_boards ):
 				print( "Firmware: " + firmware_version )
-			return serialObj
+			return 
 		
 
 	##############################################################################
     # Disconnect Option (-d)                                                     #
 	##############################################################################
 	elif ( user_option == '-d' ):
-		serialObj = comports( ['-d'], serialObj )
-		serialObj.reset_controller()
-		return serialObj
+		comports( ['-d'], zavDevice )
+		zavDevice.reset_controller()
+		return 
 
 	##############################################################################
     # Unknown Option                                                             #
@@ -619,7 +618,7 @@ def connect( Args, serialObj ):
 		print( "Error: unknown option passed to connect " +
                "function" )	
 		error_msg()
-		return serialObj
+		return 
 ## connect ##
 
 
