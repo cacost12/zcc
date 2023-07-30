@@ -70,7 +70,7 @@ def display_help_info( command ):
 ####################################################################################
 def error_msg():
 	print( "Something went wrong. Report this issue to " + 
-              "the Sun Devil Rocketry development team" )	
+              "the Zenith development team" )	
 ## error_msg ##
 
 
