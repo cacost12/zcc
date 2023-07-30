@@ -164,13 +164,13 @@ class terminalData:
                 rx_bytes.append( self.serialObj.read() )
             return rx_bytes 
 
-	# Set the SDR controller to enable board-specific commands
-    def set_SDR_controller(self, controller_name, firmware_name = None ):
+	# Set the controller to enable board-specific commands
+    def set_controller(self, controller_name, firmware_name = None ):
         self.controller = controller_name
         self.firmware   = firmware_name
 
-	# Reset the SDR controller to disable board-specific commands
-    def reset_SDR_controller(self):
+	# Reset the controller to disable board-specific commands
+    def reset_controller(self):
         self.controller    = None
         self.firmware_name = None
 

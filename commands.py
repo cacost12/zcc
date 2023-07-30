@@ -591,7 +591,7 @@ def connect( Args, serialObj ):
 				firmware_version = firmware_ids[serialObj.readByte()]
 
 			# Set global controller variable 
-			serialObj.set_SDR_controller(
+			serialObj.set_controller(
 						controller_descriptions[controller_response],
 					    firmware_version	
 									    )
@@ -609,7 +609,7 @@ def connect( Args, serialObj ):
 	##############################################################################
 	elif ( user_option == '-d' ):
 		serialObj = comports( ['-d'], serialObj )
-		serialObj.reset_SDR_controller()
+		serialObj.reset_controller()
 		return serialObj
 
 	##############################################################################
