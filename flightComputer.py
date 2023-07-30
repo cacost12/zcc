@@ -3,8 +3,8 @@
 # flightComputer.py -- module with command line functions specific to the flight   # 
 #                      computer                                                    #
 # Author: Colton Acosta                                                            # 
-# Date: 2/26/2023                                                                  #
-# Sun Devil Rocketry Avionics                                                      #
+# Date: 7/30/2023                                                                  #
+# Zenith Avionics                                                                  #
 #                                                                                  #
 ####################################################################################
 
@@ -29,20 +29,16 @@ from   hw_commands import sensor_extract_data_filter
 import commands
 import sensor_conv
 
+
 ####################################################################################
 # Global Variables                                                                 #
 ####################################################################################
 
 # Serial port timeouts
 if ( zav_debug ):
-    default_timeout = 100 # 100 second timeout
+    DEFAULT_TIMEOUT = 100 # 100 second timeout
 else:
-    default_timeout = 1   # 1 second timeout
-
-# Supported boards
-supported_boards = [
-                   "Flight Computer (A0002 Rev 2.0)" 
-                   ]
+    DEFAULT_TIMEOUT = 1   # 1 second timeout
 
 
 ####################################################################################
@@ -59,7 +55,7 @@ supported_boards = [
 #         Probes and tests the dual deploy firmware                                #
 #                                                                                  #
 ####################################################################################
-def dual_deploy( Args, serialObj ):
+def dual_deploy( Args, zavDevice ):
     ################################################################################
     # Local Variables                                                              #
     ################################################################################
@@ -95,56 +91,54 @@ def dual_deploy( Args, serialObj ):
                                       dual_deploy_inputs,
                                       command_type )
     if ( not parse_check ):
-        return serialObj # user inputs failed parse tests
+        return # user inputs failed parse tests
+
 
     ################################################################################
     # Command Specific Parsing                                                     #
     ################################################################################
 
-    # Check for active flight computer connection running the dual deploy firmware
-    if ( serialObj.controller not in supported_boards ):
-        print( "Error: The dual-deploy command requires an active connection to " +
-               "a flight computer.")
-        return serialObj
-    
     # Check that the flight computer is running the dual deploy firmware
-    if ( serialObj.firmware != "Dual Deploy"):
+    if ( zavDevice.firmware != "Dual Deploy"):
         print( "Error: The dual-deploy command requires the flight computer to " + 
                "be running the dual-deploy firmware. The flight computer is "    + 
-               "currently running the " + serialObj.firmware + " firmware" )
-        return serialObj
+               "currently running the " + zavDevice.firmware + " firmware" )
+        return 
 
     # Set the subcommand
     subcommand = Args[0]
+
 
     ################################################################################
     # dual-deploy help                                                             #
     ################################################################################
     if ( subcommand == "help" ):
         commands.display_help_info( "dual-deploy" )
-        return serialObj
+        return 
+
 
     ################################################################################
     # dual-deploy status                                                           #
     ################################################################################
     elif ( subcommand == "status" ):
+
         # Send the dual-deploy/status opcode 
-        serialObj.sendByte( opcode                )
-        serialObj.sendByte( sub_opcodes['status'] )
+        zavDevice.sendByte( opcode                )
+        zavDevice.sendByte( sub_opcodes['status'] )
 
         # Receive the recovery programmed settings
-        main_alt     = byte_array_to_int( serialObj.readBytes( 4 ) )
-        drogue_delay = byte_array_to_int( serialObj.readBytes( 4 ) )
+        main_alt     = byte_array_to_int( zavDevice.readBytes( 4 ) )
+        drogue_delay = byte_array_to_int( zavDevice.readBytes( 4 ) )
 
         # Receive the ground pressure
-        ground_press = byte_array_to_float( serialObj.readBytes( 4 ) )
+        ground_press = byte_array_to_float( zavDevice.readBytes( 4 ) )
         ground_press /= 1000
 
         # Receive the sample rates, ms/sample
-        ld_sample_rate = byte_array_to_int( serialObj.readBytes( 4 ) )
-        ad_sample_rate = byte_array_to_int( serialObj.readBytes( 4 ) )
-        md_sample_rate = byte_array_to_int( serialObj.readBytes( 4 ) )
-        zd_sample_rate = byte_array_to_int( serialObj.readBytes( 4 ) )
+        ld_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
+        ad_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
+        md_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
+        zd_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
 
         # Display Results
         print( "Main Deployment Altitude        : " + str( main_alt       ) + " ft"  )
@@ -154,7 +148,7 @@ def dual_deploy( Args, serialObj ):
         print( "Apogee Detect Sample Rate       : " + str( ad_sample_rate ) + " ms"  )
         print( "Main Altitude Detect Sample Rate: " + str( md_sample_rate ) + " ms"  )
         print( "Landing Detect Sample Rate      : " + str( zd_sample_rate ) + " ms"  )
-        return serialObj
+        return 
 
     ################################################################################
     # dual-deploy extract                                                          #
