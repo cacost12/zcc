@@ -1,11 +1,11 @@
 ####################################################################################
 #                                                                                  #
-# sdec.py -- main terminal program. Contains main program                          #
+# zcc.py -- main terminal program. Contains main program                           #
 #            loop and global objects                                               #
 #                                                                                  #
 # Author: Colton Acosta                                                            #
-# Date: 4/16/2022                                                                  #
-# Sun Devil Rocketry Avionics                                                      #
+# Date: 7/30/2023                                                                  #
+# Zenith Avionics                                                                  #
 #                                                                                  #
 ####################################################################################
 
@@ -59,6 +59,10 @@ command_list = {
                  "loxpurge"   : engineController.lox_purge       ,
                  "dual-deploy": flightComputer.dual_deploy
                 }
+
+# Display Constants
+TERMINAL_PROMPT              = "ZCC> "
+UNRECOGNIZED_COMMAND_MESSAGE = "Error: Unsupported command"
 
 
 ####################################################################################
@@ -215,8 +219,8 @@ def parseInput(userin):
         userCommand = userin[0]
         CommandArgs = userin[1:] 
     except TypeError:
-        print("Error: Unsupported command")
-        userin = input("SDR>> ")
+        print( UNRECOGNIZED_COMMAND_MESSAGE )
+        userin = input( TERMINAL_PROMPT )
         parseInput(userin)
 
     # Check if user input corresponds to a function
@@ -225,9 +229,11 @@ def parseInput(userin):
            return userin
 
     # User input doesn't correspond to a command
-    print("Error: Unsupported command")
-    userin = input("SDR>> ")
+    print( UNRECOGNIZED_COMMAND_MESSAGE )
+    userin = input( TERMINAL_PROMPT )
     return parseInput(userin)
+## parseInput ##
+
 
 ####################################################################################
 # Application Entry Point                                                          #

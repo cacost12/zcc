@@ -1,24 +1,23 @@
-<h1> Sun Devil Embedded Control (sdec)</h1>
+<h1> Zenith Command and Control (zcc)</h1>
 
 <h2>Description:</h2> 
 
-<p>sdec is a python-based terminal program which allows
-the user to access all functionality available on Sun Devil Rocketry PCBs.</p>
+<p>zcc is a python-based terminal program which allows
+the user to access all functionality available on all Zenith flight computers.</p>
 
 <h2>Installation:</h2>
-<p>The Terminal-Control program requires a functional python installation and the
+<p>The program requires a functional python installation and the
 pyserial module, which can be installed using pip. The program is run within a single 
 terminal, and may be invoked from the command line using the python interpreter. Support is
 currently available for Windows and Linux operating systems. </p>
 
 <h2>Supported Boards:</h2>
 <p>
-L0002: Liquid Engine Controller (Rev 3/Rev 4)
+A0002: Full-Feature Flight Computer (Rev 1)
 
-A0002: Flight Computer (Rev 1)
+A0003: Legacy SDR Flight Computer (Rev1)
 
-L0005: Valve Controller (Rev 2)
-
+A0004: Legacy SDR Flight Computer Lite (Rev1)
 </p>
 <p>For more information on usage of the above hardware with the Terminal-Control program, please
 refer to the board's firmware documentation </p>
