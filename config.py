@@ -1,10 +1,10 @@
 ####################################################################################
 #                                                                                  #
-# config.py -- Contains sdec global configuration parameters                       #
+# config.py -- Contains zcc global configuration parameters                        #
 #                                                                                  #
 # Author: Colton Acosta                                                            #
-# Date: 12/29/2022                                                                 #
-# Sun Devil Rocketry Avionics                                                      #
+# Date: 7/30/2023                                                                  #
+# Zenith Avionics                                                                  #
 #                                                                                  #
 ####################################################################################
 
@@ -24,10 +24,10 @@ cmd_args = sys.argv
 
 # Debug configuration, true for debug timeout settings
 if ( 'debug' in cmd_args ):
-    sdr_debug = True 
-    print( 'SDEC Running in DEBUG mode' )
+    zav_debug = True 
+    print( 'ZCC Running in DEBUG mode' )
 else:
-    sdr_debug = False
+    zav_debug = False
 
 
 ###################################################################################

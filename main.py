@@ -32,17 +32,17 @@ from   config import *  # global settings
 ####################################################################################
 
 # List of terminal commands
-command_list = { 
-                 "exit"       : commands.exitFunc                ,
-                 "help"       : commands.helpFunc                ,
-                 "clear"      : commands.clearConsole            ,
-                 "comports"   : commands.comports                ,
-                 "ping"       : commands.ping                    ,
-				 "connect"    : commands.connect                 ,
-                 "ignite"     : hw_commands.ignite               ,
-                 "flash"      : hw_commands.flash                ,
-                 "sensor"     : hw_commands.sensor               ,
-                 "dual-deploy": flightComputer.dual_deploy
+command_callbacks = { 
+                "exit"       : commands.exitFunc                ,
+                "help"       : commands.helpFunc                ,
+                "clear"      : commands.clearConsole            ,
+                "comports"   : commands.comports                ,
+                "ping"       : commands.ping                    ,
+                "connect"    : commands.connect                 ,
+                "ignite"     : hw_commands.ignite               ,
+                "flash"      : hw_commands.flash                ,
+                "sensor"     : hw_commands.sensor               ,
+                "dual-deploy": flightComputer.dual_deploy
                 }
 
 # Display Constants
@@ -53,14 +53,15 @@ UNRECOGNIZED_COMMAND_MESSAGE = "Error: Unsupported command"
 ####################################################################################
 #                                                                                  #
 # OBJECT:                                                                          #
-# 		terminalData                                                               #
+# 		ZAVDevice                                                                  #
 #                                                                                  #
 # DESCRIPTION:                                                                     #
+#       Interface to zenith controller using serial port                           #
 # 		serial port user API and handler for passing data                          #
 #       between command functions                                                  #
 #                                                                                  #
 ####################################################################################
-class terminalData:
+class ZAVDevice:
     def __init__( self ):
         self.baudrate            = None
         self.comport             = None
@@ -71,8 +72,6 @@ class terminalData:
         self.firmware            = None
         self.flash_write_enabled = False 
         self.sensor_readouts     = {}
-        self.engine_state        = None
-        self.valve_states        = {}
 
     # Initialize Serial Port
     def initComport(self, baudrate, comport, timeout):
@@ -174,14 +173,11 @@ class terminalData:
         self.controller    = None
         self.firmware_name = None
 
-    # Get the state of the liquid engine
-    def get_engine_state( self ):
-        return self.engine_state
+    # Execute a command using the current device connection
+    def execute_command( self, command, args ):
+        command_callbacks[command]( args, self )
 
-    # Set the state of the liquid engine
-    def set_engine_state( self, engine_state ):
-        self.engine_state = engine_state
-## class terminalData ##
+## class ZAVDevice ##
 
 
 ####################################################################################
@@ -193,7 +189,7 @@ class terminalData:
 # 		checks user input against command list options                             #
 #                                                                                  #
 ####################################################################################
-def parseInput(userin): 
+def parseInput( userin ): 
 
     # Get rid of any whitespace
     userin.strip()
@@ -209,7 +205,7 @@ def parseInput(userin):
         parseInput(userin)
 
     # Check if user input corresponds to a function
-    for command in command_list: 
+    for command in command_callbacks: 
         if userCommand == command:
            return userin
 
@@ -226,7 +222,7 @@ def parseInput(userin):
 if __name__ == '__main__':
     
     # Initialize Serial Port Object
-    terminalSerObj = terminalData()
+    zavDevice = ZAVDevice()
 
     # Look for possible connections
     avail_ports = serial.tools.list_ports.comports()
@@ -235,20 +231,20 @@ if __name__ == '__main__':
             # Connect
             port_num = port.device
             connect_args  = [ '-p', port_num]
-            commands.connect( connect_args, terminalSerObj )
+            commands.connect( connect_args, zavDevice )
             
     # Display command prompt
-    while(True):
+    while( True ):
         # Command prompt
         userin         = input( TERMINAL_PROMPT )
 
         # Parse command
-        userin_clean   = parseInput(userin)
+        userin_clean   = parseInput( userin )
         userCommand    = userin_clean[0]
         userArgs       = userin_clean[1:]
 
         # Execute Command
-        terminalSerObj = command_list[userCommand](userArgs, terminalSerObj)
+        zavDevice.execute_command( userCommand, userArgs )
 ## parseInput ##
 
 
