@@ -23,8 +23,6 @@ import serial.tools.list_ports
 ####################################################################################
 import commands         # general terminal commands
 import hw_commands      # general hardware commands
-import valveController  # valve controller commands
-import engineController # engine controller commands
 import flightComputer   # flight computer commands
 from   config import *  # global settings
 
@@ -41,22 +39,9 @@ command_list = {
                  "comports"   : commands.comports                ,
                  "ping"       : commands.ping                    ,
 				 "connect"    : commands.connect                 ,
-                 "sol"        : valveController.sol              ,
-                 "valve"      : valveController.valve            ,
-                 "power"      : engineController.power           ,
                  "ignite"     : hw_commands.ignite               ,
                  "flash"      : hw_commands.flash                ,
                  "sensor"     : hw_commands.sensor               ,
-                 "abort"      : engineController.hotfire_abort   ,
-                 "telreq"     : engineController.telreq          ,
-                 "pfpurge"    : engineController.pfpurge         ,
-                 "fillchill"  : engineController.fillchill       ,
-                 "standby"    : engineController.standby         ,
-                 "hotfire"    : engineController.hotfire         ,
-                 "getstate"   : engineController.hotfire_getstate,
-                 "stophotfire": engineController.stop_hotfire    ,
-                 "stoppurge"  : engineController.stop_purge      ,
-                 "loxpurge"   : engineController.lox_purge       ,
                  "dual-deploy": flightComputer.dual_deploy
                 }
 
