@@ -255,7 +255,7 @@ if __name__ == '__main__':
     # Display command prompt
     while(True):
         # Command prompt
-        userin         = input("SDR>> ")
+        userin         = input( TERMINAL_PROMPT )
 
         # Parse command
         userin_clean   = parseInput(userin)
