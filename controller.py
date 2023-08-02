@@ -201,10 +201,10 @@ sensor_frame_sizes = {
                     controller_names[1]: 36,
 
                     # Legacy SDR Flight Computer rev 1.0
-                    controller_names[4]: 32,
+                    controller_names[2]: 32,
 
                     # Legacy SDR Flight Computer Lite rev 1.0
-                    controller_names[5]: 12,
+                    controller_names[3]: 12,
                      }
 
 # Sensor raw readout conversion functions
