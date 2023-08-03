@@ -421,6 +421,7 @@ def sensor( Args, serialObj, show_readouts = True ):
     sensor_bytes_list = []
     sensor_int_list   = []
 
+
     ################################################################################
     # Basic Inputs Parsing                                                         #
     ################################################################################
@@ -1252,15 +1253,6 @@ def ignite(Args, serialObj):
     # Maximum number of arguments
     max_args = 1
 
-    # Supported boards
-    supported_boards = [
-                        controller_names[2],  # Engine controller rev 4
-                        controller_names[3],  # Flight computer rev 1
-                        controller_names[4],  # Flight computer rev 2
-                        controller_names[5],  # Flight computer lite rev 1
-                        controller_names[7]   # Engine controller rev 5 
-                       ]
-
     # Command type -- subcommand function
     command_type = 'subcommand'
 
@@ -1306,18 +1298,6 @@ def ignite(Args, serialObj):
     ################################################################################
     # Command-Specific Checks                                                      #
     ################################################################################
-
-    # Verify Controller Connection
-    if ( ( not (serialObj.controller in supported_boards) ) and 
-         ( user_subcommand != "help"                      ) ):
-        print("Error: The ignite command requires a valid " + 
-              "serial connection to an ignition compatible controller "  + 
-              "device." )
-        print( "Supported boards: " )
-        for board in supported_boards:
-            print( "\t" + board )
-        print( "Run the \"connect\" command to establish a valid connection.")
-        return serialObj
 
     # Engine controller commands check
     if ( user_subcommand == "fire" ):
