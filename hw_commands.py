@@ -198,13 +198,13 @@ def get_sensor_readouts( controller, sensors, sensor_bytes ):
 #        Obtains a frame of sensor data from a controller's flash in byte format   #
 #                                                                                  #
 ####################################################################################
-def get_sensor_frame_bytes( serialObj ):
+def get_sensor_frame_bytes( zavDevice ):
 
     # Determine the size of the frame
-    frame_size = sensor_frame_sizes[serialObj.controller]
+    frame_size = sensor_frame_sizes[zavDevice.controller]
 
     # Get bytes
-    rx_bytes = serialObj.readBytes( frame_size )
+    rx_bytes = zavDevice.readBytes( frame_size )
     return rx_bytes
 ## get_sensor_frame_bytes ##
 
@@ -359,7 +359,7 @@ def sensor_extract_data_filter( data ):
 #         Displays sensor data and/or info                                         #
 #                                                                                  #
 ####################################################################################
-def sensor( Args, serialObj, show_readouts = True ):
+def sensor( Args, zavDevice, show_readouts = True ):
 
     ################################################################################
     # Local Variables                                                              #
@@ -399,10 +399,10 @@ def sensor( Args, serialObj, show_readouts = True ):
                        }
 
     # Complete list of sensor names/numbers 
-    sensor_numbers = list( controller_sensors[serialObj.controller].keys() )
+    sensor_numbers = list( controller_sensors[zavDevice.controller].keys() )
 
     # Sensor poll codes
-    sensor_poll_codes = sensor_codes[serialObj.controller]
+    sensor_poll_codes = sensor_codes[zavDevice.controller]
     sensor_poll_cmds  = {
                          'START'   : b'\xF3',
                          'REQUEST' : b'\x51',
@@ -415,7 +415,7 @@ def sensor( Args, serialObj, show_readouts = True ):
     sensor_poll_timeout = 100
 
     # Size of sensor readouts
-    readout_sizes = sensor_sizes[serialObj.controller]
+    readout_sizes = sensor_sizes[zavDevice.controller]
 
     # Lists of sensor data
     sensor_bytes_list = []
@@ -434,7 +434,7 @@ def sensor( Args, serialObj, show_readouts = True ):
 
     # Return if user input fails parse checks
     if ( not parse_check ):
-        return serialObj
+        return 
 
     # Set subcommand, options, and input data
     user_subcommand = Args[0]
@@ -448,12 +448,12 @@ def sensor( Args, serialObj, show_readouts = True ):
         num_sensors      = len( user_sensor_nums )
 
     # Verify connection to board with sensors
-    if ( not (serialObj.controller in controller_sensors.keys()) ):
+    if ( not (zavDevice.controller in controller_sensors.keys()) ):
         print( "Error: The sensor command requires a valid " +
                "serial connection to a controller with "     +
                "sensors. Run the \"connect\" command to "    +
                "establish a valid connection" )
-        return serialObj
+        return 
 
     ################################################################################
     # Command-Specific Checks                                                      #
@@ -471,16 +471,16 @@ def sensor( Args, serialObj, show_readouts = True ):
             # Loop over input sensors and validity of each
             for sensor_num in user_sensor_nums:
                 if ( not (sensor_num in 
-                          controller_sensors[serialObj.controller].keys())
+                          controller_sensors[zavDevice.controller].keys())
                    ):
                     print("Error: \"" + sensor_num + "\" is "  +
                           "is not a valid sensor for "         +
-                          serialObj.controller + ". Run "      +
+                          zavDevice.controller + ". Run "      +
                           "the \"sensor list\" subcommand to " +
                           "see a list of all available "       +
                           "sensors and their corresponding "   +
                           "codes." )
-                    return serialObj
+                    return
 
             # Sensor numbers are valid, determine number of bytes needed for 
             # selected sensors
@@ -493,7 +493,7 @@ def sensor( Args, serialObj, show_readouts = True ):
     ################################################################################
     if   ( user_subcommand == "help" ):
         commands.display_help_info( "sensor" )
-        return serialObj
+        return
 
 
     ################################################################################
@@ -502,39 +502,39 @@ def sensor( Args, serialObj, show_readouts = True ):
     elif ( user_subcommand == "dump" ):
 
         # Send command opcode 
-        serialObj.sendByte( opcode )
+        zavDevice.sendByte( opcode )
 
         # Send sensor dump subcommand code
-        serialObj.sendByte( subcommand_codes[user_subcommand] )
+        zavDevice.sendByte( subcommand_codes[user_subcommand] )
 
         # Determine how many bytes are to be recieved
-        sensor_dump_size_bytes = serialObj.readByte()
+        sensor_dump_size_bytes = zavDevice.readByte()
         sensor_dump_size_bytes = int.from_bytes( 
                                      sensor_dump_size_bytes, 
                                      "big" )
 
         # Recieve data from controller
         for byteNum in range( sensor_dump_size_bytes ):
-            sensor_bytes_list.append( serialObj.readByte() )
+            sensor_bytes_list.append( zavDevice.readByte() )
 
         # Get readouts from byte array
-        serialObj.sensor_readouts = get_sensor_readouts( 
-                                                       serialObj.controller, 
+        zavDevice.sensor_readouts = get_sensor_readouts( 
+                                                       zavDevice.controller, 
                                                        sensor_numbers      ,
                                                        sensor_bytes_list
                                                        )
 
         # Display Sensor readouts
         if ( show_readouts ):
-            for sensor in serialObj.sensor_readouts:
+            for sensor in zavDevice.sensor_readouts:
                 readout_formatted = format_sensor_readout(
-                                                        serialObj.controller,
+                                                        zavDevice.controller,
                                                         sensor               ,
-                                                        serialObj.sensor_readouts[sensor]
+                                                        zavDevice.sensor_readouts[sensor]
                                                         )
                 print( readout_formatted )
             
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: sensor poll                                                      #
@@ -542,64 +542,64 @@ def sensor( Args, serialObj, show_readouts = True ):
     elif ( user_subcommand == "poll" ):
 
         # Send command opcode
-        serialObj.sendByte( opcode )
+        zavDevice.sendByte( opcode )
 
         # Send sensor poll subcommand code
-        serialObj.sendByte( subcommand_codes[user_subcommand] )
+        zavDevice.sendByte( subcommand_codes[user_subcommand] )
 
         # Tell the controller how many sensors to use
-        serialObj.sendByte( num_sensors.to_bytes( 1, 'big' ) )
+        zavDevice.sendByte( num_sensors.to_bytes( 1, 'big' ) )
 
         # Send the controller the sensor codes
         for sensor_num in user_sensor_nums:
-            serialObj.sendByte( sensor_poll_codes[sensor_num] )
+            zavDevice.sendByte( sensor_poll_codes[sensor_num] )
         
         # Start the sensor poll sequence
-        serialObj.sendByte( sensor_poll_cmds['START'] )
+        zavDevice.sendByte( sensor_poll_cmds['START'] )
 
         # Receive and display sensor readouts 
         timeout_ctr = 0
         while ( timeout_ctr <= sensor_poll_timeout ):
-            serialObj.sendByte( sensor_poll_cmds['REQUEST'] )
-            sensor_bytes_list = serialObj.readBytes( sensor_poll_frame_size ) 
+            zavDevice.sendByte( sensor_poll_cmds['REQUEST'] )
+            sensor_bytes_list = zavDevice.readBytes( sensor_poll_frame_size ) 
             sensor_readouts   = get_sensor_readouts(
-                                                    serialObj.controller, 
+                                                    zavDevice.controller, 
                                                     user_sensor_nums    ,
                                                     sensor_bytes_list
                                                    )
             for sensor in sensor_readouts:
                 readout_formated = format_sensor_readout(
-                                                         serialObj.controller, 
+                                                         zavDevice.controller, 
                                                          sensor              ,
                                                          sensor_readouts[sensor] 
                                                          )
                 print( readout_formated + '\t', end='' )
             print()
             # Pause for readibility
-            serialObj.sendByte( sensor_poll_cmds['WAIT'] )
+            zavDevice.sendByte( sensor_poll_cmds['WAIT'] )
             time.sleep(0.2)
-            serialObj.sendByte( sensor_poll_cmds['RESUME'])
+            zavDevice.sendByte( sensor_poll_cmds['RESUME'])
             timeout_ctr += 1
 
         # Stop transmission    
-        serialObj.sendByte( sensor_poll_cmds['STOP'] )
+        zavDevice.sendByte( sensor_poll_cmds['STOP'] )
 
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: sensor list                                                      #
     ################################################################################
     elif ( user_subcommand == "list" ):
         # Identify current serial connection
-        print("Sensor numbers for " + serialObj.controller +
+        print("Sensor numbers for " + zavDevice.controller +
                " :" )
 
         # Loop over all sensors in list and print
-        for sensor_num in controller_sensors[serialObj.controller].keys():
+        for sensor_num in controller_sensors[zavDevice.controller].keys():
             print( "\t" + sensor_num + " : " +
-                    controller_sensors[serialObj.controller][sensor_num] 
+                    controller_sensors[zavDevice.controller][sensor_num] 
                  ) 
-        return serialObj
+        return
     ## sensor list ##
 
     ################################################################################
@@ -608,7 +608,7 @@ def sensor( Args, serialObj, show_readouts = True ):
     elif ( user_subcommand == "plot" ):
 
         # Data Filename 
-        filename = sensor_data_filenames[serialObj.controller]
+        filename = sensor_data_filenames[zavDevice.controller]
 
         # Import Data
         with open( filename, "r" ) as file:
@@ -633,16 +633,16 @@ def sensor( Args, serialObj, show_readouts = True ):
         # Select data to plot
         sensor_labels = []
         for sensor in user_sensor_nums:
-            sensor_index = sensor_indices[serialObj.controller][sensor]
+            sensor_index = sensor_indices[zavDevice.controller][sensor]
             sensor_label = ( sensor + " (" + 
-                             sensor_units[serialObj.controller][sensor] + ")" )
+                             sensor_units[zavDevice.controller][sensor] + ")" )
             sensor_labels.append( sensor_label )
             time_data = sensor_data_filtered[:,0]/60.0 # minutes
             plt.plot( time_data, 
                       sensor_data_filtered[:,sensor_index] )
 
         # Plot parameters
-        plt.title( "Data: " + serialObj.controller )
+        plt.title( "Data: " + zavDevice.controller )
         plt.xlabel( "Time, min" )
         plt.ylabel( "Measurement Value" )
         plt.grid()
@@ -650,7 +650,7 @@ def sensor( Args, serialObj, show_readouts = True ):
 
         # Display
         plt.show()
-        return serialObj
+        return
 
     ################################################################################
     # Unknown subcommand                                                           #
@@ -659,7 +659,7 @@ def sensor( Args, serialObj, show_readouts = True ):
         print( "Error: Unknown subcommand passed to sensor " +
                "function. " )
         commands.error_msg()
-        return serialObj
+        return
 ## sensor ##
 
 
@@ -672,7 +672,7 @@ def sensor( Args, serialObj, show_readouts = True ):
 #         read and write data to a controller's extenral flash                     #
 #                                                                                  #
 ####################################################################################
-def flash(Args, serialObj):
+def flash(Args, zavDevice):
 
     ################################################################################
     # Local Variables                                                              #
@@ -760,7 +760,7 @@ def flash(Args, serialObj):
                              ]
     
     # Extract blocks
-    extract_frame_size       = sensor_frame_sizes[serialObj.controller]
+    extract_frame_size       = sensor_frame_sizes[zavDevice.controller]
     extract_num_frames       = 524288 // extract_frame_size
     extract_num_unused_bytes = 524288 %  extract_frame_size
 
@@ -777,7 +777,7 @@ def flash(Args, serialObj):
 
     # Return if user input fails parse checks
     if ( not parse_check ):
-        return serialObj 
+        return 
 
     # Set subcommand, options, and input data
     user_subcommand = Args[0]
@@ -792,7 +792,7 @@ def flash(Args, serialObj):
             options_command = False
         elif ( len(Args_options) < 4):
             print("Error: Not enough options/inputs")
-            return serialObj
+            return
         else:
             user_options = [Args_options[0], Args_options[2]]
             user_inputs  = {
@@ -813,7 +813,7 @@ def flash(Args, serialObj):
         # Check for duplicate options
         if (user_options[0] == user_options[1]):
             print('Error: Duplicate option supplied')
-            return serialObj
+            return
 
         # Perform option specific checks
         for user_option in user_options:
@@ -826,7 +826,7 @@ def flash(Args, serialObj):
                 # Check length
                 if(len(user_inputs[user_option]) != 4):
                     print('Error: Invalid byte format.')
-                    return serialObj
+                    return
                 
                 # Check for 0x prefix
                 if(user_inputs[user_option][0:2] != '0x'):
@@ -838,7 +838,7 @@ def flash(Args, serialObj):
                     byte_int = int(user_inputs[user_option], 0)
                 except ValueError:
                     print('Error: Invalid byte.')
-                    return serialObj
+                    return
 
                 # Convert to byte
                 byte = byte_int.to_bytes(1, 'big')
@@ -856,12 +856,12 @@ def flash(Args, serialObj):
                     num_bytes = int(user_inputs[user_option], 0)
                 except ValueError:
                     print('Error: Invalid number of bytes.')
-                    return serialObj
+                    return
 
                 # Verify numbers of bytes is in range
                 if ( num_bytes <= 0 or num_bytes > max_num_bytes ): 
                     print( "Error: Invalid number of bytes." )
-                    return serialObj
+                    return
 
             ################# -a option #######################
             elif (user_option == '-a'):
@@ -871,7 +871,7 @@ def flash(Args, serialObj):
                 # Check length
                 if(len(user_inputs[user_option]) != 8):
                     print('Error: Invalid Address format.')
-                    return serialObj
+                    return
                 
                 # Check for 0x prefix
                 if(user_inputs[user_option][0:2] != '0x'):
@@ -883,7 +883,7 @@ def flash(Args, serialObj):
                     address_int = int(user_inputs[user_option], 0)
                 except ValueError:
                     print('Error: Invalid Address.')
-                    return serialObj
+                    return
 
                 # Convert to bytes
                 address_bytes = address_int.to_bytes(
@@ -905,10 +905,10 @@ def flash(Args, serialObj):
                 print('Error: The write and read operations ' +
                       'require an address supplied by the '   +
                       '-a option')
-                return serialObj
+                return
 
     # Verify Engine Controller Connection
-    if (not (serialObj.controller in flash_supported_boards) ):
+    if (not (zavDevice.controller in flash_supported_boards) ):
         print("Error: The flash command requires a valid " + 
               "serial connection to a controller with \n"    + 
               "external flash. This includes the following " +
@@ -916,14 +916,14 @@ def flash(Args, serialObj):
         for board in flash_supported_boards:
             print( board )
         print()
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: flash help                                                       #
     ################################################################################
     if (user_subcommand == "help"):
         commands.display_help_info('flash')
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: flash enable                                                     #
@@ -931,25 +931,25 @@ def flash(Args, serialObj):
     elif (user_subcommand == "enable"):
 
         # Send the flash Opcode
-        serialObj.sendByte(opcode)
+        zavDevice.sendByte(opcode)
 
         # Send the subcommand Opcode
-        serialObj.sendByte(flash_enable_base_code)
+        zavDevice.sendByte(flash_enable_base_code)
 
         # Recieve the status byte from the engine controller
-        return_code = serialObj.readByte()
+        return_code = zavDevice.readByte()
 
         # Parse return code
         if (return_code == b''):
             print("Error: No response code recieved")
         elif (return_code == b'\x00'):
             print("Flash write enable successful")
-            serialObj.flash_write_enabled = True
+            zavDevice.flash_write_enabled = True
         else:
             print("Error: Unrecognised response code recieved")
         
 
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: flash disable                                                    #
@@ -957,24 +957,24 @@ def flash(Args, serialObj):
     elif (user_subcommand == "disable"):
 
         # Send the flash opcode
-        serialObj.sendByte(opcode)
+        zavDevice.sendByte(opcode)
 
         # Send the subcommand opcode
-        serialObj.sendByte(flash_disable_base_code)
+        zavDevice.sendByte(flash_disable_base_code)
 
         # Recieve the status byte from the engine controller
-        return_code = serialObj.readByte()
+        return_code = zavDevice.readByte()
 
         # Parse return code
         if (return_code == b''):
             print("Error: No response code recieved")
         elif (return_code == b'\x00'):
             print("Flash write disable successful")
-            serialObj.flash_write_enabled = False 
+            zavDevice.flash_write_enabled = False 
         else:
             print("Error: Unrecognised response code recieved")
 
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: flash status                                                     #
@@ -982,17 +982,17 @@ def flash(Args, serialObj):
     elif (user_subcommand == "status"):
 
         # Send the flash opcode
-        serialObj.sendByte(opcode)
+        zavDevice.sendByte(opcode)
 
         # Send the subcommand opcode
-        serialObj.sendByte(flash_status_base_code)
+        zavDevice.sendByte(flash_status_base_code)
 
         # Recieve the contents of the flash status register 
-        status_register     = serialObj.readByte()
+        status_register     = zavDevice.readByte()
         status_register_int = ord( status_register     )
 
         # Get the status code of the flash operation
-        flash_status_code = serialObj.readByte()
+        flash_status_code = zavDevice.readByte()
 
         # Parse return code
         if (status_register == b''):
@@ -1010,7 +1010,7 @@ def flash(Args, serialObj):
             print( "BPL : ", get_bit( status_register_int, 7 ) )
             print( )
 
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: flash write                                                      #
@@ -1018,44 +1018,37 @@ def flash(Args, serialObj):
     elif (user_subcommand == "write"):
 
         # Check if flash chip has writing operations enabled
-        if (not serialObj.flash_write_enabled
+        if (not zavDevice.flash_write_enabled
             and not (user_options[0] == '-h')):
             print("Error: Flash write has not been enabled. " +
                   "Run flash write enable to enable writing " +
                   "to the flash chip")
-            return serialObj
+            return
 
         ################### -h option #########################
         if (user_options[0] == '-h'):
             commands.display_help_info('flash')
-            return serialObj
+            return
 
         ################### -b option #########################
         elif (byte != None):
             # Send flash opcode
-            serialObj.sendByte(opcode)
+            zavDevice.sendByte( opcode )
 
-            # Calculate operation code
-            num_bytes_to_send = 1
-            operation_code_int = (flash_write_base_code_int + 
-                                 num_bytes_to_send)
-            operation_code = operation_code_int.to_bytes(
-                                   1, 
-                                   byteorder = 'big',
-                                   signed = False
-                                   ) 
-
-            # Send flash operation code
-            serialObj.sendByte(operation_code)
+            # Send flash subcommand 
+            zavDevice.sendByte( flash_write_base_code )
             
             # Send base address
-            serialObj.sendBytes(address_bytes)
+            zavDevice.sendBytes( address_bytes )
+
+            # Send number of bytes to write
+            zavDevice.sendBytes( b'\x01' )
 
             # Send byte to write to flash
-            serialObj.sendByte(byte)
+            zavDevice.sendByte( byte )
 
             # Recieve response code from engine controller
-            return_code = serialObj.readByte()
+            return_code = zavDevice.readByte()
 
             # Parse return code
             if (return_code == b''):
@@ -1065,24 +1058,24 @@ def flash(Args, serialObj):
             else:
                 print("Error: Unrecognised response code recieved")
 
-            return serialObj
+            return
 
         ################### -s option #########################
         elif (string != None):
             print("Error: Option not yet supported")
-            return serialObj
+            return
 
         ################### -f option #########################
         elif (file != None):
             print("Error: Option not yet supported")
-            return serialObj
+            return
         
         ################# Unknown option #####################
         else:
             print("Error: Something went wrong. The flash "+ 
                   "write command failed to find input "    +
                   "to write to flash")
-            return serialObj
+            return
 
 
     ################################################################################
@@ -1093,36 +1086,34 @@ def flash(Args, serialObj):
         ################### -h option #########################
         if (user_options[0] == '-h'):
             commands.display_help_info('flash')
-            return serialObj
+            return
 
         ################### -n option #########################
         elif( num_bytes != None ):
 
             # Send flash opcode
-            serialObj.sendByte(opcode)
-
-            # Calculate operation code
-            operation_code_int = ( flash_read_base_code_int + 
-                                 num_bytes )
-            operation_code = operation_code_int.to_bytes(
-                                   1, 
-                                   byteorder = 'big',
-                                   signed = False
-                                   ) 
+            zavDevice.sendByte(opcode)
 
             # Send flash operation code
-            serialObj.sendByte(operation_code)
+            zavDevice.sendByte( flash_read_base_code )
             
             # Send base address
-            serialObj.sendBytes(address_bytes)
+            zavDevice.sendBytes(address_bytes)
+
+            # Send number of bytes to read
+            num_bytes_byte = int.to_bytes( 1, 
+                                           num_bytes, 
+                                           byteorder = 'big', 
+                                           signed = False )
+            zavDevice.sendByte( num_bytes_byte )
 
             # Receive Bytes into a byte array
             rx_bytes = []
             for i in range( num_bytes ):
-                rx_bytes.append( serialObj.readByte() )
+                rx_bytes.append( zavDevice.readByte() )
 
             # Get flash status code
-            flash_read_status = serialObj.readByte() 
+            flash_read_status = zavDevice.readByte() 
             if ( flash_read_status != b'\x00' ):
                 print( "Error: Flash Read Unsuccessful" )
 
@@ -1132,12 +1123,12 @@ def flash(Args, serialObj):
                 print( rx_byte, ", ", end = "" )
             print()
 
-            return serialObj
+            return
 
         ################### -f option #########################
         elif( file!= None ):
             print("Error: Option not yet supported")
-            return serialObj
+            return
 
 
     ################################################################################
@@ -1146,19 +1137,19 @@ def flash(Args, serialObj):
     elif (user_subcommand == "erase"):
         
         # Send flash opcode 
-        serialObj.sendByte( opcode )
+        zavDevice.sendByte( opcode )
 
         # Send flash erase subcommand code 
-        serialObj.sendByte( flash_erase_base_code )
+        zavDevice.sendByte( flash_erase_base_code )
 
         # Get and Display status of flash erase operation
-        flash_erase_status = serialObj.readByte()
+        flash_erase_status = zavDevice.readByte()
         if ( flash_erase_status == b'\x00'):
             print( "Flash erase sucessful" )
         else:
             print( "Error: Flash erase unsuccessful" )
 
-        return serialObj
+        return
 
 
     ################################################################################
@@ -1167,10 +1158,10 @@ def flash(Args, serialObj):
     elif ( user_subcommand == "extract" ):
 
         # Send flash opcode 
-        serialObj.sendByte( opcode )
+        zavDevice.sendByte( opcode )
 
         # Send flash extract subcommand code 
-        serialObj.sendByte( flash_extract_base_code )
+        zavDevice.sendByte( flash_extract_base_code )
 
         # Start timer
         start_time = time.perf_counter()
@@ -1181,23 +1172,23 @@ def flash(Args, serialObj):
         for i in range( extract_num_frames ):
             if ( i%100 == 0 ):
                 print( "Reading block " + str(i) + "..."  )
-            rx_sensor_frame_block = get_sensor_frame_bytes( serialObj )
+            rx_sensor_frame_block = get_sensor_frame_bytes( zavDevice )
             rx_byte_blocks.append( rx_sensor_frame_block )
         
         # Receive the unused bytes
-        unused_bytes = serialObj.readBytes( extract_num_unused_bytes )
+        unused_bytes = zavDevice.readBytes( extract_num_unused_bytes )
 
         # Recieve the status byte from the engine controller
-        return_code = serialObj.readByte()
+        return_code = zavDevice.readByte()
 
         # Record ending time
         extract_time = time.perf_counter() - start_time
 
         # Convert the data from bytes to measurement readouts
-        sensor_frames = get_sensor_frames( serialObj.controller, rx_byte_blocks )
+        sensor_frames = get_sensor_frames( zavDevice.controller, rx_byte_blocks )
 
         # Export the data to txt files
-        with open( sensor_data_filenames[serialObj.controller], 'w' ) as file:
+        with open( sensor_data_filenames[zavDevice.controller], 'w' ) as file:
             for sensor_frame in sensor_frames:
                 for val in sensor_frame:
                     file.write( str( val ) )
@@ -1212,7 +1203,7 @@ def flash(Args, serialObj):
             print( "Extract time: {:.3f} sec".format( extract_time ) )
         else:
             print("Error: Unrecognised response code recieved")
-        return serialObj
+        return
 
 
     ################################################################################
@@ -1221,7 +1212,7 @@ def flash(Args, serialObj):
     else:
         print("Error: unknown option passed to connect function")    
         commands.error_msg()
-        return serialObj
+        return
 # sensor # 
 
 
@@ -1234,7 +1225,7 @@ def flash(Args, serialObj):
 #         issue the ignition signal to the controller or display                   #
 #                                                                                  #
 ####################################################################################
-def ignite(Args, serialObj):
+def ignite(Args, zavDevice):
 
     ################################################################################
     # Local Variables                                                              #
@@ -1285,7 +1276,7 @@ def ignite(Args, serialObj):
 
     # Return if user input fails parse checks
     if ( not parse_check ):
-        return serialObj 
+        return 
 
     # Set subcommand
     user_subcommand = Args[0]
@@ -1296,18 +1287,18 @@ def ignite(Args, serialObj):
 
     # Flight computer commands check
     if ( ( user_subcommand == "main" ) or ( user_subcommand == "drogue" ) ):
-        if ( not ( "Flight Computer" in serialObj.controller ) ):
+        if ( not ( "Flight Computer" in zavDevice.controller ) ):
             print( "Error: the ignite main and ignite drogue commands " + 
                    "require a connection to a flight computer device. " + 
                    "Run the \"connect\" command to setup a connection.")
-            return serialObj
+            return
 
     ################################################################################
     # Subcommand: ignite help                                                      #
     ################################################################################
     if (user_subcommand == "help"):
         commands.display_help_info('ignite')
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: ignite main                                                     #
@@ -1315,13 +1306,13 @@ def ignite(Args, serialObj):
     elif (user_subcommand == "main"):
 
         # Send ignite opcode
-        serialObj.sendByte(opcode)
+        zavDevice.sendByte(opcode)
 
         # Send subcommand code
-        serialObj.sendByte(ignite_main_code)
+        zavDevice.sendByte(ignite_main_code)
 
         # Get ignition status code
-        ign_status = serialObj.readByte()
+        ign_status = zavDevice.readByte()
 
         # Display result of ignition
         if (ign_status == ignite_success_code):
@@ -1345,7 +1336,7 @@ def ignite(Args, serialObj):
             print("Ignition unsuccessful. Unrecognized ignition status code.")
 
         # Exit
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: ignite  drogue                                                   #
@@ -1353,13 +1344,13 @@ def ignite(Args, serialObj):
     elif (user_subcommand == "drogue"):
 
         # Send ignite opcode
-        serialObj.sendByte(opcode)
+        zavDevice.sendByte(opcode)
 
         # Send subcommand code
-        serialObj.sendByte(ignite_drogue_code)
+        zavDevice.sendByte(ignite_drogue_code)
 
         # Get ignition status code
-        ign_status = serialObj.readByte()
+        ign_status = zavDevice.readByte()
 
         # Display ignition status
 
@@ -1388,7 +1379,7 @@ def ignite(Args, serialObj):
             print("Ignition unsuccessful. Unrecognized ignition status code.")
 
         # Exit
-        return serialObj
+        return
 
     ################################################################################
     # Subcommand: ignite cont                                                      #
@@ -1396,19 +1387,19 @@ def ignite(Args, serialObj):
     elif (user_subcommand == "cont"):
 
         # Send ignite opcode
-        serialObj.sendByte(opcode)
+        zavDevice.sendByte(opcode)
 
         # Send subcommand code
-        serialObj.sendByte(ignite_cont_code)
+        zavDevice.sendByte(ignite_cont_code)
 
         # Get ignition status code
-        ign_status = serialObj.readByte()
+        ign_status = zavDevice.readByte()
 
         # Parse response code
         ign_status_int = ord(ign_status)
 
         # Display continuity statuses
-        if ( "Engine Controller" in serialObj.controller ):
+        if ( "Engine Controller" in zavDevice.controller ):
 
             # Ematch and switch continuity
             if ((ign_status_int >> 3) & 1):
@@ -1428,7 +1419,7 @@ def ignite(Args, serialObj):
             else: 
                 print("Nozzle Wire:           Disconnected")
 
-        elif ( "Flight Computer" in serialObj.controller ):
+        elif ( "Flight Computer" in zavDevice.controller ):
 
             # Switch continuity
             if ((ign_status_int >> 0) & 1):
@@ -1449,7 +1440,7 @@ def ignite(Args, serialObj):
                 print("Drogue Ematch: Disconnected")
 
         # Exit
-        return serialObj
+        return
 
     ################################################################################
     # Unknown Subcommand                                                           #
@@ -1458,7 +1449,7 @@ def ignite(Args, serialObj):
         print("Error: unknown subcommand passed to ignite " +
               "function")    
         commands.error_msg()
-        return serialObj
+        return
 
 
 ###################################################################################
