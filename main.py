@@ -49,6 +49,10 @@ command_callbacks = {
 TERMINAL_PROMPT              = "ZCC> "
 UNRECOGNIZED_COMMAND_MESSAGE = "Error: Unsupported command"
 
+# Flash Memory
+FLASH_WRITE_ENABLED  = True
+FLASH_WRITE_DISABLED = False
+
 
 ####################################################################################
 #                                                                                  #
@@ -176,6 +180,16 @@ class ZAVDevice:
     # Execute a command using the current device connection
     def execute_command( self, command, args ):
         command_callbacks[command]( args, self )
+
+    # Enable/Disbale writing to flash
+    def flashWriteEnable( self ):
+        self.flash_write_enabled = FLASH_WRITE_ENABLED
+
+    def flashWriteDisable( self ):
+        self.flash_write_enabled = FLASH_WRITE_DISABLED
+
+    def getFlashWriteProtection( self ):
+        return self.flash_write_enabled
 
 ## class ZAVDevice ##
 

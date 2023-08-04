@@ -714,32 +714,18 @@ def flash(Args, zavDevice):
     command_type = 'subcommand'
 
     # Command opcode
-    opcode = b'\x22' 
+    opcode = b'\x04' 
 
-    # Subcommand Data format
-    # SUBOP2 | SUBOP1 | SUBOP0 | BNUM4 | BNUM3 | BNUM2 | BNUM1 | BNUM0  
-    # SUBOP(0-2) Subcommand opcode bits specifies the subcommand to be
-    #            executed
-    # BNUM(0-4) Number of bytes to read/write (max 31)
     max_num_bytes = 31
 
     # Subcommand codes
-    flash_read_base_code    = b'\x00'  # SUBOP 000 -> 0000 0000
-    flash_enable_base_code  = b'\x20'  # SUBOP 001 -> 0010 0000
-    flash_disable_base_code = b'\x40'  # SUBOP 010 -> 0100 0000
-    flash_write_base_code   = b'\x60'  # SUBOP 011 -> 0110 0000
-    flash_erase_base_code   = b'\x80'  # SUBOP 100 -> 1000 0000
-    flash_status_base_code  = b'\xa0'  # SUBOP 101 -> 1010 0000
-    flash_extract_base_code = b'\xc0'  # SUBOP 110 -> 1100 0000
-
-    # Subcommand codes as integers
-    flash_read_base_code_int    = ord( flash_read_base_code    )
-    flash_enable_base_code_int  = ord( flash_enable_base_code  )
-    flash_disable_base_code_int = ord( flash_disable_base_code )
-    flash_write_base_code_int   = ord( flash_write_base_code   )
-    flash_erase_base_code_int   = ord( flash_erase_base_code   )
-    flash_status_base_code_int  = ord( flash_status_base_code  )
-    flash_extract_base_code_int = ord( flash_extract_base_code )
+    flash_read_code    = b'\x01'  
+    flash_enable_code  = b'\x02'  
+    flash_disable_code = b'\x03'  
+    flash_write_code   = b'\x04'  
+    flash_erase_code   = b'\x05'  
+    flash_status_code  = b'\x06'  
+    flash_extract_code = b'\x07'  
 
     # flash IO data
     byte            = None
@@ -750,15 +736,6 @@ def flash(Args, zavDevice):
     # Flash status register contents 
     status_register = None
 
-    # Supported flash boards
-    flash_supported_boards = [
-                   "Liquid Engine Controller (L0002 Rev 4.0)",
-                   "Flight Computer (A0002 Rev 1.0)"         ,
-                   "Flight Computer (A0002 Rev 2.0)"         ,
-                   "Flight Computer Lite (A0007 Rev 1.0)"    ,
-                   "Liquid Engine Controller (L0002 Rev 5.0)"
-                             ]
-    
     # Extract blocks
     extract_frame_size       = sensor_frame_sizes[zavDevice.controller]
     extract_num_frames       = 524288 // extract_frame_size
@@ -907,16 +884,6 @@ def flash(Args, zavDevice):
                       '-a option')
                 return
 
-    # Verify Engine Controller Connection
-    if (not (zavDevice.controller in flash_supported_boards) ):
-        print("Error: The flash command requires a valid " + 
-              "serial connection to a controller with \n"    + 
-              "external flash. This includes the following " +
-              "boards: \n" )
-        for board in flash_supported_boards:
-            print( board )
-        print()
-        return
 
     ################################################################################
     # Subcommand: flash help                                                       #
@@ -930,25 +897,12 @@ def flash(Args, zavDevice):
     ################################################################################
     elif (user_subcommand == "enable"):
 
-        # Send the flash Opcode
+        # Send Opcode/Subcommand
         zavDevice.sendByte(opcode)
+        zavDevice.sendByte(flash_enable_code)
 
-        # Send the subcommand Opcode
-        zavDevice.sendByte(flash_enable_base_code)
-
-        # Recieve the status byte from the engine controller
-        return_code = zavDevice.readByte()
-
-        # Parse return code
-        if (return_code == b''):
-            print("Error: No response code recieved")
-        elif (return_code == b'\x00'):
-            print("Flash write enable successful")
-            zavDevice.flash_write_enabled = True
-        else:
-            print("Error: Unrecognised response code recieved")
-        
-
+        # Reconfigure Controller
+        zavDevice.flashWriteEnable()
         return
 
     ################################################################################
@@ -956,24 +910,11 @@ def flash(Args, zavDevice):
     ################################################################################
     elif (user_subcommand == "disable"):
 
-        # Send the flash opcode
+        # Send the Opcode/Subcommand
         zavDevice.sendByte(opcode)
+        zavDevice.sendByte(flash_disable_code)
 
-        # Send the subcommand opcode
-        zavDevice.sendByte(flash_disable_base_code)
-
-        # Recieve the status byte from the engine controller
-        return_code = zavDevice.readByte()
-
-        # Parse return code
-        if (return_code == b''):
-            print("Error: No response code recieved")
-        elif (return_code == b'\x00'):
-            print("Flash write disable successful")
-            zavDevice.flash_write_enabled = False 
-        else:
-            print("Error: Unrecognised response code recieved")
-
+        zavDevice.flashWriteDisable()
         return
 
     ################################################################################
@@ -985,7 +926,7 @@ def flash(Args, zavDevice):
         zavDevice.sendByte(opcode)
 
         # Send the subcommand opcode
-        zavDevice.sendByte(flash_status_base_code)
+        zavDevice.sendByte(flash_status_code)
 
         # Recieve the contents of the flash status register 
         status_register     = zavDevice.readByte()
@@ -1018,7 +959,7 @@ def flash(Args, zavDevice):
     elif (user_subcommand == "write"):
 
         # Check if flash chip has writing operations enabled
-        if (not zavDevice.flash_write_enabled
+        if ( not zavDevice.getFlashWriteProtection()
             and not (user_options[0] == '-h')):
             print("Error: Flash write has not been enabled. " +
                   "Run flash write enable to enable writing " +
@@ -1036,7 +977,7 @@ def flash(Args, zavDevice):
             zavDevice.sendByte( opcode )
 
             # Send flash subcommand 
-            zavDevice.sendByte( flash_write_base_code )
+            zavDevice.sendByte( flash_write_code )
             
             # Send base address
             zavDevice.sendBytes( address_bytes )
@@ -1047,17 +988,7 @@ def flash(Args, zavDevice):
             # Send byte to write to flash
             zavDevice.sendByte( byte )
 
-            # Recieve response code from engine controller
-            return_code = zavDevice.readByte()
-
-            # Parse return code
-            if (return_code == b''):
-                print("Error: No response code recieved")
-            elif ( return_code == b'\x00' ):
-                print("Flash write successful")
-            else:
-                print("Error: Unrecognised response code recieved")
-
+            print("Flash write successful")
             return
 
         ################### -s option #########################
@@ -1095,14 +1026,13 @@ def flash(Args, zavDevice):
             zavDevice.sendByte(opcode)
 
             # Send flash operation code
-            zavDevice.sendByte( flash_read_base_code )
+            zavDevice.sendByte( flash_read_code )
             
             # Send base address
             zavDevice.sendBytes(address_bytes)
 
             # Send number of bytes to read
-            num_bytes_byte = int.to_bytes( 1, 
-                                           num_bytes, 
+            num_bytes_byte = num_bytes.to_bytes( 1, 
                                            byteorder = 'big', 
                                            signed = False )
             zavDevice.sendByte( num_bytes_byte )
@@ -1111,11 +1041,6 @@ def flash(Args, zavDevice):
             rx_bytes = []
             for i in range( num_bytes ):
                 rx_bytes.append( zavDevice.readByte() )
-
-            # Get flash status code
-            flash_read_status = zavDevice.readByte() 
-            if ( flash_read_status != b'\x00' ):
-                print( "Error: Flash Read Unsuccessful" )
 
             # Display Bytes on the terminal
             print( "Received bytes: \n" )
@@ -1140,15 +1065,9 @@ def flash(Args, zavDevice):
         zavDevice.sendByte( opcode )
 
         # Send flash erase subcommand code 
-        zavDevice.sendByte( flash_erase_base_code )
+        zavDevice.sendByte( flash_erase_code )
 
-        # Get and Display status of flash erase operation
-        flash_erase_status = zavDevice.readByte()
-        if ( flash_erase_status == b'\x00'):
-            print( "Flash erase sucessful" )
-        else:
-            print( "Error: Flash erase unsuccessful" )
-
+        print( "Flash erase sucessful" )
         return
 
 
@@ -1161,7 +1080,7 @@ def flash(Args, zavDevice):
         zavDevice.sendByte( opcode )
 
         # Send flash extract subcommand code 
-        zavDevice.sendByte( flash_extract_base_code )
+        zavDevice.sendByte( flash_extract_code )
 
         # Start timer
         start_time = time.perf_counter()
@@ -1178,9 +1097,6 @@ def flash(Args, zavDevice):
         # Receive the unused bytes
         unused_bytes = zavDevice.readBytes( extract_num_unused_bytes )
 
-        # Recieve the status byte from the engine controller
-        return_code = zavDevice.readByte()
-
         # Record ending time
         extract_time = time.perf_counter() - start_time
 
@@ -1196,13 +1112,8 @@ def flash(Args, zavDevice):
                 file.write( '\n' )    
 
         # Parse return code
-        if (return_code == b''):
-            print("Error: No response code recieved")
-        elif (return_code == b'\x00'):
-            print( "Flash extract successful" )
-            print( "Extract time: {:.3f} sec".format( extract_time ) )
-        else:
-            print("Error: Unrecognised response code recieved")
+        print( "Flash extract successful" )
+        print( "Extract time: {:.3f} sec".format( extract_time ) )
         return
 
 
