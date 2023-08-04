@@ -18,6 +18,7 @@
 import sys
 import os
 import time
+import datetime
 import numpy                    as np
 from   matplotlib import pyplot as plt
 import struct
@@ -1103,8 +1104,31 @@ def flash(Args, zavDevice):
         # Convert the data from bytes to measurement readouts
         sensor_frames = get_sensor_frames( zavDevice.controller, rx_byte_blocks )
 
+        # Set Create Output Data folder -> output/extract/controller/date
+        if ( not os.path.exists( "output" ) ):
+            os.mkdir( "output" )
+        output_dir = "output/extract/"
+        if ( not os.path.exists( output_dir ) ):
+            os.mkdir( output_dir )
+        output_dir += zavDevice.controller + "/"
+        if ( not os.path.exists( output_dir ) ):
+            os.mkdir( output_dir )
+        run_date = datetime.date.today()
+        run_date = run_date.strftime( "%m-%d-%Y" )
+        output_dir += run_date
+        if ( not os.path.exists( output_dir ) ):
+            os.mkdir( output_dir )
+
+        # Determine file name so as to not overwrite old data
+        base_filename = "sensor_data"
+        test_num = 0
+        output_filename = output_dir + "/" + base_filename + str( test_num ) + ".txt"
+        while ( os.path.exists( output_filename ) ):
+            test_num += 1
+            output_filename = output_dir + "/" + base_filename + str( test_num ) + ".txt"
+
         # Export the data to txt files
-        with open( sensor_data_filenames[zavDevice.controller], 'w' ) as file:
+        with open( output_filename, 'w' ) as file:
             for sensor_frame in sensor_frames:
                 for val in sensor_frame:
                     file.write( str( val ) )
