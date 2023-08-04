@@ -204,7 +204,7 @@ def parseArgs(
 # 		quits the program                                                          #
 #                                                                                  #
 ####################################################################################
-def exitFunc(Args, serialObj):
+def exitFunc(Args, zavDevice):
    sys.exit()
 ## exitFunc ##
 
@@ -218,9 +218,9 @@ def exitFunc(Args, serialObj):
 # 		displays command info from manpage                                         #
 #                                                                                  #
 ####################################################################################
-def helpFunc(Args, serialObj):
+def helpFunc(Args, zavDevice):
     display_help_info('manpage')
-    return serialObj 
+    return 
 ## helpFunc ##
     
 
@@ -233,12 +233,12 @@ def helpFunc(Args, serialObj):
 # 		clears the python terminal                                                 #
 #                                                                                  #
 ####################################################################################
-def clearConsole(Args, serialObj):
+def clearConsole(Args, zavDevice):
     command = 'clear'
     if os.name in ('nt', 'dos'):
         command = 'cls'
     os.system(command)
-    return serialObj 
+    return 
 ## clearConsole ##
 
 
@@ -568,10 +568,7 @@ def connect( Args, zavDevice ):
 	##############################################################################
 	elif ( user_option == '-p' ):
 		# Open the serial comport
-		zavDevice = comports(
-                            ['-c', user_port, '921600'], 
-                            serialObj
-                            )
+		comports( ['-c', user_port, '921600'], zavDevice )
 		
 		# Send the connect opcode 
 		zavDevice.sendByte( opcode )
@@ -584,22 +581,19 @@ def connect( Args, zavDevice ):
 			comports( ['-d'], zavDevice )
 			return 
 		else:
-			# Get the firmware version if supported
-			if ( controller_descriptions[controller_response] in 
-			     firmware_id_supported_boards ):
-				firmware_version = firmware_ids[zavDevice.readByte()]
+			# Get the firmware version 
+			firmware_version = firmware_ids[zavDevice.readByte()]
 
 			# Set global controller variable 
 			zavDevice.set_controller(
 						controller_descriptions[controller_response],
 					    firmware_version	
-									    )
+									)
 
             # Display connection info									
 			print( "Connection established with " + 
                     controller_descriptions[controller_response] )
-			if ( zavDevice.controller in firmware_id_supported_boards ):
-				print( "Firmware: " + firmware_version )
+			print( "Firmware: " + firmware_version )
 			return 
 		
 
