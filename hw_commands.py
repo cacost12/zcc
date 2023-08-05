@@ -34,10 +34,30 @@ from   controller  import *
 # Global Variables                                                                 #
 ####################################################################################
 
+# Run config
 if ( zav_debug ):
     default_timeout = 100 # 100 second timeout
 else:
     default_timeout = 1   # 1 second timeout
+
+# Ignition return codes
+IGN_SUCCESS_CODE     = b'\x01'
+IGN_SWITCH_FAIL      = b'\x02'
+IGN_CONT_FAIL        = b'\x03'
+IGN_FAILED_TO_IGNITE = b'\x04'
+IGN_UNRECOGNIZED_CMD = b'\x05'
+
+# Error messages
+ign_messages = {
+    b''     : "Ignition unsuccessful. No response code received from flight computer",
+    IGN_SUCCESS_CODE :   "Ignition successful",
+    IGN_SWITCH_FAIL  : ( "Ignition unsuccessful. Device is not armed. Ensure the " + 
+                        "switch terminals are shorted." ),
+    IGN_CONT_FAIL    : ( "Ignition unsuccessful. No ematch continuity. Ensure an " +
+                        "ematch is connected." ), 
+    IGN_FAILED_TO_IGNITE : ( "Ignition unsuccessful. Ematch failed to ignite." ),
+    IGN_UNRECOGNIZED_CMD : ( "Error: unrecognized ignition response code" )
+}
 
 
 ####################################################################################
@@ -1182,21 +1202,13 @@ def ignite(Args, zavDevice):
     command_type = 'subcommand'
 
     # Command opcode
-    opcode = b'\x20' 
+    opcode = b'\x03' 
 
     # Subcommand codes
-    ignite_cont_code     = b'\x02'
-    ignite_main_code     = b'\x03'
-    ignite_drogue_code   = b'\x04'
+    ignite_main_code   = b'\x01'    
+    ignite_drogue_code = b'\x02'    
+    ignite_cont_code   = b'\x03'
 
-    # Response codes, correspond to enum values in ignition.h
-    ignite_success_code            = b'\x41'
-    ignite_main_fail_switch_code   = b'\x45'
-    ignite_main_fail_cont_code     = b'\x46'
-    ignite_main_fail_code          = b'\x47'
-    ignite_drogue_fail_switch_code = b'\x45'
-    ignite_drogue_fail_cont_code   = b'\x48'
-    ignite_drogue_fail_code        = b'\x49'
 
     ################################################################################
     # Basic Inputs Parsing                                                         #
@@ -1216,17 +1228,6 @@ def ignite(Args, zavDevice):
     # Set subcommand
     user_subcommand = Args[0]
 
-    ################################################################################
-    # Command-Specific Checks                                                      #
-    ################################################################################
-
-    # Flight computer commands check
-    if ( ( user_subcommand == "main" ) or ( user_subcommand == "drogue" ) ):
-        if ( not ( "Flight Computer" in zavDevice.controller ) ):
-            print( "Error: the ignite main and ignite drogue commands " + 
-                   "require a connection to a flight computer device. " + 
-                   "Run the \"connect\" command to setup a connection.")
-            return
 
     ################################################################################
     # Subcommand: ignite help                                                      #
@@ -1235,42 +1236,21 @@ def ignite(Args, zavDevice):
         commands.display_help_info('ignite')
         return
 
+
     ################################################################################
-    # Subcommand: ignite main                                                     #
+    # Subcommand: ignite main                                                      #
     ################################################################################
     elif (user_subcommand == "main"):
 
-        # Send ignite opcode
-        zavDevice.sendByte(opcode)
-
-        # Send subcommand code
-        zavDevice.sendByte(ignite_main_code)
+        # Send ignite opcode/subcommand
+        zavDevice.sendByte( opcode           )
+        zavDevice.sendByte( ignite_main_code )
 
         # Get ignition status code
         ign_status = zavDevice.readByte()
 
-        # Display result of ignition
-        if (ign_status == ignite_success_code):
-            print("Ignition successful")
-        elif (ign_status == b''):
-            print('Ignition unsuccessful. No response ' +
-                  'code recieved from flight computer.' )
-        elif (ign_status == ignite_main_fail_switch_code):
-            print('Ignition unsuccessful. No continuity ' +
-                  'in arming switch. Ensure the '+
-                  'switch is armed.')
-        elif ( ign_status == ignite_main_fail_cont_code ):
-            print( 'Ignition unsuccessful. No continuity in ematch. Ensure an ' +
-                   'ematch is connected to the main screw terminals ')
-
-        elif (ign_status == ignite_main_fail_code):
-            print('Ignition unsuccessful. The ignite signal ' +
-                  'was asserted but the ematch was not lit')
-
-        else:
-            print("Ignition unsuccessful. Unrecognized ignition status code.")
-
-        # Exit
+        # Show result 
+        print( ign_messages[ign_status] )
         return
 
     ################################################################################
@@ -1279,41 +1259,14 @@ def ignite(Args, zavDevice):
     elif (user_subcommand == "drogue"):
 
         # Send ignite opcode
-        zavDevice.sendByte(opcode)
-
-        # Send subcommand code
-        zavDevice.sendByte(ignite_drogue_code)
+        zavDevice.sendByte( opcode             )
+        zavDevice.sendByte( ignite_drogue_code )
 
         # Get ignition status code
         ign_status = zavDevice.readByte()
 
-        # Display ignition status
-
-        # Display results of operation 
-        if (ign_status == ignite_success_code):
-            print("Ignition successful")
-
-        elif (ign_status == b''):
-            print('Ignition unsuccessful. No response ' +
-                  'code recieved from flight computer.' )
-
-        elif (ign_status == ignite_drogue_fail_switch_code):
-            print('Ignition unsuccessful. No continuity ' +
-                  'in arming switch. Ensure the '+
-                  'switch is armed.')
-
-        elif ( ign_status == ignite_drogue_fail_cont_code ):
-            print( 'Ignition unsuccessful. No continuity in ematch. Ensure an ' +
-                   'ematch is connected to the drogue screw terminals ')
-
-        elif (ign_status == ignite_drogue_fail_code):
-            print('Ignition unsuccessful. The ignite signal ' +
-                  'was asserted but the ematch was not lit')
-
-        else:
-            print("Ignition unsuccessful. Unrecognized ignition status code.")
-
-        # Exit
+        # Show result 
+        print( ign_messages[ign_status] )
         return
 
     ################################################################################
@@ -1321,60 +1274,35 @@ def ignite(Args, zavDevice):
     ################################################################################
     elif (user_subcommand == "cont"):
 
-        # Send ignite opcode
-        zavDevice.sendByte(opcode)
-
-        # Send subcommand code
-        zavDevice.sendByte(ignite_cont_code)
+        # Send opcode/subcommand
+        zavDevice.sendByte( opcode           )
+        zavDevice.sendByte( ignite_cont_code )
 
         # Get ignition status code
+        ign_cont   = zavDevice.readByte()
         ign_status = zavDevice.readByte()
 
         # Parse response code
-        ign_status_int = ord(ign_status)
+        ign_cont = ord( ign_cont )
 
-        # Display continuity statuses
-        if ( "Engine Controller" in zavDevice.controller ):
+        # Switch continuity
+        if ( ( ign_cont >> 0 ) & 1 ):
+            print("Switch:        Connected")
+        else: 
+            print("Switch:        Disconnected")
 
-            # Ematch and switch continuity
-            if ((ign_status_int >> 3) & 1):
-                print("Ematch and Switch:     Connected")
-            else: 
-                print("Ematch and Switch:     Disconnected")
+        # Main ematch continuity
+        if ( ( ign_cont >> 1 ) & 1 ):
+            print("Main Ematch:   Connected")
+        else: 
+            print("Main Ematch:   Disconnected")
 
-            # Solid propellant wire continuity
-            if ((ign_status_int >> 4) & 1):
-                print("Solid Propellant Wire: Connected")
-            else: 
-                print("Solid Propellant Wire: Disconnected")
+        # Drogue continuity
+        if ( ( ign_cont >> 2 ) & 1 ):
+            print("Drogue Ematch: Connected")
+        else: 
+            print("Drogue Ematch: Disconnected")
 
-            # Nozzle wire continuity
-            if ((ign_status_int >> 5) & 1):
-                print("Nozzle Wire:           Connected")
-            else: 
-                print("Nozzle Wire:           Disconnected")
-
-        elif ( "Flight Computer" in zavDevice.controller ):
-
-            # Switch continuity
-            if ((ign_status_int >> 0) & 1):
-                print("Switch:        Connected")
-            else: 
-                print("Switch:        Disconnected")
-
-            # Main ematch continuity
-            if ((ign_status_int >> 1) & 1):
-                print("Main Ematch:   Connected")
-            else: 
-                print("Main Ematch:   Disconnected")
-
-            # Nozzle wire continuity
-            if ((ign_status_int >> 2) & 1):
-                print("Drogue Ematch: Connected")
-            else: 
-                print("Drogue Ematch: Disconnected")
-
-        # Exit
         return
 
     ################################################################################
