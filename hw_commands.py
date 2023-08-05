@@ -411,7 +411,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
     command_type = 'subcommand'
 
     # Command opcode 
-    opcode = b'\x03'
+    opcode = b'\x05'
 
     # Subcommand codes
     subcommand_codes = {
@@ -468,13 +468,6 @@ def sensor( Args, zavDevice, show_readouts = True ):
         user_sensor_nums = Args[2:]
         num_sensors      = len( user_sensor_nums )
 
-    # Verify connection to board with sensors
-    if ( not (zavDevice.controller in controller_sensors.keys()) ):
-        print( "Error: The sensor command requires a valid " +
-               "serial connection to a controller with "     +
-               "sensors. Run the \"connect\" command to "    +
-               "establish a valid connection" )
-        return 
 
     ################################################################################
     # Command-Specific Checks                                                      #
@@ -596,6 +589,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
                                                          )
                 print( readout_formated + '\t', end='' )
             print()
+
             # Pause for readibility
             zavDevice.sendByte( sensor_poll_cmds['WAIT'] )
             time.sleep(0.2)
