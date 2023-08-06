@@ -1,13 +1,13 @@
-#################################################################################### 
-#                                                                                  # 
-# hw_commands.py -- module with general command line functions with hardware       # 
+####################################################################################
+#                                                                                  #
+# hw_commands.py -- module with general command line functions with hardware       #
 #                   oriented functionality                                         #
 #                                                                                  #
-# Author: Colton Acosta                                                            # 
+# Author: Colton Acosta                                                            #
 # Date: 12/18/2022                                                                 #
 # Sun Devil Rocketry Avionics                                                      #
 #                                                                                  #
-#################################################################################### 
+####################################################################################
 
 
 ####################################################################################
@@ -39,25 +39,6 @@ if ( zav_debug ):
     default_timeout = 100 # 100 second timeout
 else:
     default_timeout = 1   # 1 second timeout
-
-# Ignition return codes
-IGN_SUCCESS_CODE     = b'\x01'
-IGN_SWITCH_FAIL      = b'\x02'
-IGN_CONT_FAIL        = b'\x03'
-IGN_FAILED_TO_IGNITE = b'\x04'
-IGN_UNRECOGNIZED_CMD = b'\x05'
-
-# Error messages
-ign_messages = {
-    b''     : "Ignition unsuccessful. No response code received from flight computer",
-    IGN_SUCCESS_CODE :   "Ignition successful",
-    IGN_SWITCH_FAIL  : ( "Ignition unsuccessful. Device is not armed. Ensure the " + 
-                        "switch terminals are shorted." ),
-    IGN_CONT_FAIL    : ( "Ignition unsuccessful. No ematch continuity. Ensure an " +
-                        "ematch is connected." ), 
-    IGN_FAILED_TO_IGNITE : ( "Ignition unsuccessful. Ematch failed to ignite." ),
-    IGN_UNRECOGNIZED_CMD : ( "Error: unrecognized ignition response code" )
-}
 
 
 ####################################################################################
@@ -1163,150 +1144,6 @@ def flash(Args, zavDevice):
         commands.error_msg()
         return
 # sensor # 
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         ignite                                                                   #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         issue the ignition signal to the controller or display                   #
-#                                                                                  #
-####################################################################################
-def ignite(Args, zavDevice):
-
-    ################################################################################
-    # Local Variables                                                              #
-    ################################################################################
-
-    # Subcommand Dictionary
-    # Options Dictionary
-    ignite_inputs = { 
-                    'main'  : {},
-                    'drogue': {},
-                    'cont'  : {},
-                    'help'  : {}
-                    }
-    
-    # Maximum number of arguments
-    max_args = 1
-
-    # Command type -- subcommand function
-    command_type = 'subcommand'
-
-    # Command opcode
-    opcode = b'\x03' 
-
-    # Subcommand codes
-    ignite_main_code   = b'\x01'    
-    ignite_drogue_code = b'\x02'    
-    ignite_cont_code   = b'\x03'
-
-
-    ################################################################################
-    # Basic Inputs Parsing                                                         #
-    ################################################################################
-
-    parse_check = commands.parseArgs(
-                                    Args,
-                                    max_args,
-                                    ignite_inputs,
-                                    command_type 
-                                    )
-
-    # Return if user input fails parse checks
-    if ( not parse_check ):
-        return 
-
-    # Set subcommand
-    user_subcommand = Args[0]
-
-
-    ################################################################################
-    # Subcommand: ignite help                                                      #
-    ################################################################################
-    if (user_subcommand == "help"):
-        commands.display_help_info('ignite')
-        return
-
-
-    ################################################################################
-    # Subcommand: ignite main                                                      #
-    ################################################################################
-    elif (user_subcommand == "main"):
-
-        # Send ignite opcode/subcommand
-        zavDevice.sendByte( opcode           )
-        zavDevice.sendByte( ignite_main_code )
-
-        # Get ignition status code
-        ign_status = zavDevice.readByte()
-
-        # Show result 
-        print( ign_messages[ign_status] )
-        return
-
-    ################################################################################
-    # Subcommand: ignite  drogue                                                   #
-    ################################################################################
-    elif (user_subcommand == "drogue"):
-
-        # Send ignite opcode
-        zavDevice.sendByte( opcode             )
-        zavDevice.sendByte( ignite_drogue_code )
-
-        # Get ignition status code
-        ign_status = zavDevice.readByte()
-
-        # Show result 
-        print( ign_messages[ign_status] )
-        return
-
-    ################################################################################
-    # Subcommand: ignite cont                                                      #
-    ################################################################################
-    elif (user_subcommand == "cont"):
-
-        # Send opcode/subcommand
-        zavDevice.sendByte( opcode           )
-        zavDevice.sendByte( ignite_cont_code )
-
-        # Get ignition status code
-        ign_cont   = zavDevice.readByte()
-        ign_status = zavDevice.readByte()
-
-        # Parse response code
-        ign_cont = ord( ign_cont )
-
-        # Switch continuity
-        if ( ( ign_cont >> 0 ) & 1 ):
-            print("Switch:        Connected")
-        else: 
-            print("Switch:        Disconnected")
-
-        # Main ematch continuity
-        if ( ( ign_cont >> 1 ) & 1 ):
-            print("Main Ematch:   Connected")
-        else: 
-            print("Main Ematch:   Disconnected")
-
-        # Drogue continuity
-        if ( ( ign_cont >> 2 ) & 1 ):
-            print("Drogue Ematch: Connected")
-        else: 
-            print("Drogue Ematch: Disconnected")
-
-        return
-
-    ################################################################################
-    # Unknown Subcommand                                                           #
-    ################################################################################
-    else:
-        print("Error: unknown subcommand passed to ignite " +
-              "function")    
-        commands.error_msg()
-        return
 
 
 ###################################################################################

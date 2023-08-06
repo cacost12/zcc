@@ -16,13 +16,18 @@
 import time
 import serial
 import serial.tools.list_ports
+import sys
 
 
 ####################################################################################
 # Project Modules                                                                  #
 ####################################################################################
+
+sys.path.insert( 0, './commands')
+
 import commands         # general terminal commands
 import hw_commands      # general hardware commands
+import ignite
 import flightComputer   # flight computer commands
 from   config import *  # global settings
 
@@ -39,7 +44,7 @@ command_callbacks = {
                 "comports"   : commands.comports                ,
                 "ping"       : commands.ping                    ,
                 "connect"    : commands.connect                 ,
-                "ignite"     : hw_commands.ignite               ,
+                "ignite"     : ignite.ignite                    ,
                 "flash"      : hw_commands.flash                ,
                 "sensor"     : hw_commands.sensor               ,
                 "dual-deploy": flightComputer.dual_deploy
