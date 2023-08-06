@@ -56,10 +56,6 @@ command_callbacks = {
 TERMINAL_PROMPT              = "ZCC> "
 UNRECOGNIZED_COMMAND_MESSAGE = "Error: Unsupported command"
 
-# Flash Memory
-FLASH_WRITE_ENABLED  = True
-FLASH_WRITE_DISABLED = False
-
 
 ####################################################################################
 # Procedures                                                                       #

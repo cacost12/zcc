@@ -20,8 +20,17 @@ import serial.tools.list_ports
 
 # Project
 import binUtil
-import controller
+import zavController
 import sensor_conv
+
+
+####################################################################################
+# Globals                                                                          #
+####################################################################################
+
+# Flash Memory
+FLASH_WRITE_ENABLED  = True
+FLASH_WRITE_DISABLED = False
 
 
 ####################################################################################
@@ -180,7 +189,7 @@ class ZAVDevice:
     def getRawSensorReadouts( self, sensors, sensor_bytes ):
 
         # Sensor readout sizes
-        sensor_size_dict = controller.sensor_sizes[self.controller]
+        sensor_size_dict = zavController.sensor_sizes[self.controller]
 
         # Starting index of bytes corresponding to individual 
         # sensor readout in sensor_bytes array
@@ -193,7 +202,7 @@ class ZAVDevice:
         for sensor in sensors:
             size             = sensor_size_dict[sensor]
             readout_bytes    = sensor_bytes[index:index+size]
-            if ( controller.sensor_formats[self.controller][sensor] == float ):
+            if ( zavController.sensor_formats[self.controller][sensor] == float ):
                 sensor_val = binUtil.byte_array_to_float( readout_bytes )
             else:
                 sensor_val = binUtil.byte_array_to_int(   readout_bytes )
@@ -208,7 +217,7 @@ class ZAVDevice:
     def convRawSensorReadouts( self, raw_readouts ):
 
         # Conversion functions
-        conv_funcs = controller.sensor_conv_funcs[self.controller]
+        conv_funcs = zavController.sensor_conv_funcs[self.controller]
 
         # Result
         readouts = {}
@@ -240,7 +249,7 @@ class ZAVDevice:
     def formatSensorReadout( self, sensor, readout ):
 
         # Readout units
-        units = controller.sensor_units[self.controller][sensor] 
+        units = zavController.sensor_units[self.controller][sensor] 
 
         # Rounded readout
         if ( units != None ):
@@ -261,7 +270,7 @@ class ZAVDevice:
     def getSensorFrameBytes( self ):
 
         # Determine the size of the frame
-        frame_size = controller.sensor_frame_sizes[self.controller]
+        frame_size = zavController.sensor_frame_sizes[self.controller]
 
         # Get bytes
         rx_bytes = self.readBytes( frame_size )
@@ -296,18 +305,18 @@ class ZAVDevice:
                 # Sensor readouts
                 sensor_frame_dict = {}
                 index = 4
-                for i, sensor in enumerate( controller.sensor_sizes[ self.controller ] ):
+                for i, sensor in enumerate( zavController.sensor_sizes[ self.controller ] ):
                     measurement = 0
                     float_bytes = []
-                    for byte_num in range( controller.sensor_sizes[self.controller][sensor] ):
-                        if ( controller.sensor_formats[self.controller][sensor] != float ):
+                    for byte_num in range( zavController.sensor_sizes[self.controller][sensor] ):
+                        if ( zavController.sensor_formats[self.controller][sensor] != float ):
                             measurement += ( int_frame[index + byte_num] << 8*byte_num )
                         else:
                             float_bytes.append( ( int_frame[index + byte_num] ).to_bytes(1, 'big' ) ) 
-                    if ( controller.sensor_formats[self.controller][sensor] == float ):
+                    if ( zavController.sensor_formats[self.controller][sensor] == float ):
                         measurement = binUtil.byte_array_to_float( float_bytes )
                     sensor_frame_dict[sensor] = measurement
-                    index += controller.sensor_sizes[self.controller][sensor]
+                    index += zavController.sensor_sizes[self.controller][sensor]
                 sensor_vals_list = list( self.convRawSensorReadouts( sensor_frame_dict ).values() )
                 for val in sensor_vals_list:
                     sensor_frame.append( val )
@@ -330,6 +339,7 @@ class ZAVDevice:
 
     def getFlashWriteProtection( self ):
         return self.flash_write_enabled
+
 ## class ZAVDevice ##
 
 

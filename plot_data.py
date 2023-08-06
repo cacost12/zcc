@@ -1,6 +1,5 @@
 from matplotlib import pyplot as plt
 import numpy as np
-import controller
 
 with open( "output/sensor_data.txt", "r" ) as file:
 	lines = file.readlines()

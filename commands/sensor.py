@@ -19,7 +19,7 @@ import time
 # Project
 import binUtil
 import commands
-import controller
+import zavController
 import config
 
 
@@ -150,13 +150,13 @@ def sensor( Args, zavDevice, show_readouts = True ):
     ################################################################################
 
     # Complete list of sensor names/numbers 
-    sensor_numbers = list( controller.controller_sensors[zavDevice.controller].keys() )
+    sensor_numbers = list( zavController.controller_sensors[zavDevice.controller].keys() )
 
     # Sensor poll codes
-    sensor_poll_codes = controller.sensor_codes[zavDevice.controller]
+    sensor_poll_codes = zavController.sensor_codes[zavDevice.controller]
 
     # Size of sensor readouts
-    readout_sizes = controller.sensor_sizes[zavDevice.controller]
+    readout_sizes = zavController.sensor_sizes[zavDevice.controller]
 
     # Lists of sensor data
     sensorByteData = []
@@ -205,7 +205,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
             # Loop over input sensors and validity of each
             for sensor_num in selectedSensorNames:
                 if ( not (sensor_num in 
-                          controller.controller_sensors[zavDevice.controller].keys())
+                          zavController.controller_sensors[zavDevice.controller].keys())
                    ):
                     print("Error: \"" + sensor_num + "\" is "  +
                           "is not a valid sensor for "         +
@@ -316,9 +316,9 @@ def sensor( Args, zavDevice, show_readouts = True ):
                " :" )
 
         # Loop over all sensors in list and print
-        for sensor_num in controller.controller_sensors[zavDevice.controller].keys():
+        for sensor_num in zavController.controller_sensors[zavDevice.controller].keys():
             print( "\t" + sensor_num + " : " +
-                    controller.controller_sensors[zavDevice.controller][sensor_num] 
+                    zavController.controller_sensors[zavDevice.controller][sensor_num] 
                  ) 
         return
     ## sensor list ##
@@ -329,7 +329,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
     elif ( subcommand == "plot" ):
 
         # Data Filename 
-        filename = controller.sensor_data_filenames[zavDevice.controller]
+        filename = zavController.sensor_data_filenames[zavDevice.controller]
 
         # Import Data
         with open( filename, "r" ) as file:

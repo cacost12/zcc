@@ -1,6 +1,7 @@
 ####################################################################################
 #                                                                                  #
-# controller.py -- Contains global variables with SDR controller information       #
+# zavController.py -- Contains global variables with controller information        #
+#                                                                                  #
 # Author: Colton Acosta                                                            #
 # Date: 7/30/2023                                                                  #
 # Zenith Avionics                                                                  #

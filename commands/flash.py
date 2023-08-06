@@ -22,7 +22,7 @@ import time
 import binUtil
 import config
 import commands
-import controller
+import zavController
 import sensor_conv
 
 
@@ -108,7 +108,7 @@ def flash( Args, zavDevice ):
     ################################################################################
 
     # Extract blocks
-    EXTRACT_FRAME_SIZE       = controller.sensor_frame_sizes[zavDevice.controller]
+    EXTRACT_FRAME_SIZE       = zavController.sensor_frame_sizes[zavDevice.controller]
     EXTRACT_NUM_FRAMES       = 524288 // EXTRACT_FRAME_SIZE 
     EXTRACT_NUM_UNUSED_BYTES = 524288 %  EXTRACT_FRAME_SIZE 
 
@@ -456,8 +456,7 @@ def flash( Args, zavDevice ):
         # Start timer
         start_time = time.perf_counter()
 
-        # Recieve Data in 32 byte blocks
-        # Flash contains 4096 blocks of data
+        # Recieve Data 
         rx_byte_blocks = []
         for i in range( EXTRACT_NUM_FRAMES ):
             if ( i%100 == 0 ):

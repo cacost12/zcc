@@ -21,7 +21,7 @@ import time
 # Project imports
 import sensor_conv
 from   config      import *
-from   controller  import *
+from   zavController  import *
 
 
 ####################################################################################
