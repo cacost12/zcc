@@ -83,7 +83,7 @@ if __name__ == '__main__':
             connect_args  = [ '-p', port_num]
             connect.connect( connect_args, zavDevice )
             
-    # Display command prompt
+    # Main program loop 
     while( True ):
         # Command prompt
         userin         = input( TERMINAL_PROMPT )
@@ -95,6 +95,7 @@ if __name__ == '__main__':
 
         # Execute Command
         zavDevice.execute_command( commandCallbacks[command], args )
+        zavDevice.flushComport()
 
 ## main ##
 

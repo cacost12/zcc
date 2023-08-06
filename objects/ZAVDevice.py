@@ -178,6 +178,10 @@ class ZAVDevice:
             for i in range( num_bytes ):
                 rx_bytes.append( self.serialObj.read() )
             return rx_bytes 
+
+    # Flush the input serial buffer
+    def flushComport( self ):
+        self.serialObj.reset_input_buffer()
     
 
     ################################################################################
