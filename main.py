@@ -28,6 +28,7 @@ sys.path.insert( 0, './commands')
 import commands         # general terminal commands
 import hw_commands      # general hardware commands
 import ignite
+import flash
 import flightComputer   # flight computer commands
 from   config import *  # global settings
 
@@ -45,7 +46,7 @@ command_callbacks = {
                 "ping"       : commands.ping                    ,
                 "connect"    : commands.connect                 ,
                 "ignite"     : ignite.ignite                    ,
-                "flash"      : hw_commands.flash                ,
+                "flash"      : flash.flash                      ,
                 "sensor"     : hw_commands.sensor               ,
                 "dual-deploy": flightComputer.dual_deploy
                 }
