@@ -25,7 +25,6 @@ sys.path.insert( 0, './commands')
 sys.path.insert( 0, './objects' )
 
 # General Project
-import commands        
 from   config import * 
 import ZAVDevice
 
@@ -37,6 +36,7 @@ import exitCommand
 import flash
 import helpCommand
 import ignite
+import ping
 import sensor
 import dualDeploy
 
@@ -47,15 +47,15 @@ import dualDeploy
 
 # List of terminal commands
 command_callbacks = { 
-                "exit"       : exitCommand.exitFunc             ,
-                "help"       : helpCommand.helpFunc             ,
-                "clear"      : clear.clearConsole               ,
-                "comports"   : comports.comports                ,
-                "ping"       : commands.ping                    ,
-                "connect"    : connect.connect                  ,
-                "ignite"     : ignite.ignite                    ,
-                "flash"      : flash.flash                      ,
-                "sensor"     : sensor.sensor                    ,
+                "exit"       : exitCommand.exitFunc,
+                "help"       : helpCommand.helpFunc,
+                "clear"      : clear.clearConsole  ,
+                "comports"   : comports.comports   ,
+                "ping"       : ping.ping           ,
+                "connect"    : connect.connect     ,
+                "ignite"     : ignite.ignite       ,
+                "flash"      : flash.flash         ,
+                "sensor"     : sensor.sensor       ,
                 "dual-deploy": dualDeploy.dual_deploy
                 }
 
