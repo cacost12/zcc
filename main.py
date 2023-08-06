@@ -24,18 +24,19 @@ import time
 sys.path.insert( 0, './commands')
 sys.path.insert( 0, './objects' )
 
-# Project
-import commands         # general terminal commands
+# General Project
+import commands        
+from   config import * 
+import ZAVDevice
 
+# Commands
+import clear
 import exitCommand
 import flash
 import helpCommand
 import ignite
 import sensor
 import dualDeploy
-
-from   config import *  # global settings
-import ZAVDevice
 
 
 ####################################################################################
@@ -46,7 +47,7 @@ import ZAVDevice
 command_callbacks = { 
                 "exit"       : exitCommand.exitFunc             ,
                 "help"       : helpCommand.helpFunc             ,
-                "clear"      : commands.clearConsole            ,
+                "clear"      : clear.clearConsole               ,
                 "comports"   : commands.comports                ,
                 "ping"       : commands.ping                    ,
                 "connect"    : commands.connect                 ,

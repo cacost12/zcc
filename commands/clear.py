@@ -1,6 +1,6 @@
 ####################################################################################
 #                                                                                  #
-# exitCommand.py -- exit command, exits the terminal                               #
+# clear.py -- clear command, clears all text from the terminal                     #
 #                                                                                  #
 # Author: Colton Acosta                                                            #
 # Date: 8/6/2023                                                                   #
@@ -12,7 +12,7 @@
 ####################################################################################
 # Imports                                                                          #
 ####################################################################################
-import sys
+import os 
 
 
 ####################################################################################
@@ -23,15 +23,19 @@ import sys
 ####################################################################################
 #                                                                                  #
 # COMMAND:                                                                         #
-# 		exit                                                                       #
+# 		clear                                                                      #
 #                                                                                  #
 # DESCRIPTION:                                                                     #
-# 		quits the program                                                          #
+# 		clears the python terminal                                                 #
 #                                                                                  #
 ####################################################################################
-def exitFunc( Args, zavDevice ):
-   sys.exit()
-## exitFunc ##
+def clearConsole( Args, zavDevice ):
+    command = 'clear'
+    if os.name in ('nt', 'dos'):
+        command = 'cls'
+    os.system(command)
+    return 
+## clearConsole ##
 
 
 ####################################################################################
