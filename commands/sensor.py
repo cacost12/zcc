@@ -87,121 +87,6 @@ POLL_TIMEOUT = 100
 ####################################################################################
 #                                                                                  #
 # PROCEDURE:                                                                       #
-#         get_raw_sensor_readouts                                                  #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Converts an array of bytes into a dictionary containing the raw sensor   #
-#       readouts in integer format                                                 #
-#                                                                                  #
-####################################################################################
-def get_raw_sensor_readouts( zavDevice, sensors, sensor_bytes ):
-
-    # Sensor readout sizes
-    sensor_size_dict = controller.sensor_sizes[zavDevice.controller]
-
-    # Starting index of bytes corresponding to individual 
-    # sensor readout in sensor_bytes array
-    index = 0
-
-    # Result
-    readouts = {}
-    
-    # Convert each sensor readout 
-    for sensor in sensors:
-        size             = sensor_size_dict[sensor]
-        readout_bytes    = sensor_bytes[index:index+size]
-        if ( controller.sensor_formats[zavDevice.controller][sensor] == float ):
-            sensor_val = binUtil.byte_array_to_float( readout_bytes )
-        else:
-            sensor_val = binUtil.byte_array_to_int(   readout_bytes )
-        readouts[sensor] = sensor_val
-        index           += size 
-
-    return readouts
-# get_raw_sensor_readouts #
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         conv_raw_sensor_readouts                                                 #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Converts raw sensor readouts in integer format into the appropriate      # 
-#         format                                                                   #
-#                                                                                  #
-####################################################################################
-def conv_raw_sensor_readouts( zavDevice, raw_readouts ):
-
-    # Conversion functions
-    conv_funcs = controller.sensor_conv_funcs[zavDevice.controller]
-
-    # Result
-    readouts = {}
-
-    # Convert each readout
-    for sensor in raw_readouts:
-        if ( conv_funcs[sensor] != None ):
-            readouts[sensor] = conv_funcs[sensor]( raw_readouts[sensor] )
-        else:
-            readouts[sensor] = raw_readouts[sensor]
-    
-    return readouts
-## conv_raw_sensor_readouts ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         get_sensor_readouts                                                      #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Converts a byte array into sensor readouts and converts digital readout  #
-#                                                                                  #
-####################################################################################
-def get_sensor_readouts( zavDevice, sensors, sensor_bytes ):
-
-    # Convert to integer form
-    int_readouts = get_raw_sensor_readouts( zavDevice, sensors, sensor_bytes )
-
-    # Make conversions
-    readouts     = conv_raw_sensor_readouts( zavDevice, int_readouts )
-    return readouts
-## get_sensor_readouts ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         format_sensor_readout                                                    #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#        Formats a sensor readout into a label, rounded readout, and units         #
-#                                                                                  #
-####################################################################################
-def format_sensor_readout( zavDevice, sensor, readout ):
-
-    # Readout units
-    units = controller.sensor_units[zavDevice.controller][sensor] 
-
-    # Rounded readout
-    if ( units != None ):
-        readout_str = "{:.3f}".format( readout )
-    else:
-        readout_str = str( readout )
-
-    # Concatentate label, readout, and units
-    if ( units != None ):
-        output = sensor + ": " + readout_str + " " + units
-    else:
-        output = sensor + ": " + readout_str
-    return output
-## format_sensor_readout ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
 #         sensor_extract_data_filter                                               #
 #                                                                                  #
 # DESCRIPTION:                                                                     #
@@ -337,6 +222,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
             for sensor_num in selectedSensorNames:
                 sensor_poll_frame_size += readout_sizes[sensor_num] 
 
+
     ################################################################################
     # Subcommand: sensor help                                                      #
     ################################################################################
@@ -365,23 +251,17 @@ def sensor( Args, zavDevice, show_readouts = True ):
             sensorByteData.append( zavDevice.readByte() )
 
         # Get readouts from byte array
-        zavDevice.sensor_readouts = get_sensor_readouts( 
-                                                       zavDevice, 
-                                                       sensor_numbers      ,
-                                                       sensorByteData
-                                                       )
+        sensor_readouts = zavDevice.getSensorReadouts( sensor_numbers, sensorByteData )
 
         # Display Sensor readouts
         if ( show_readouts ):
-            for sensor in zavDevice.sensor_readouts:
-                readout_formatted = format_sensor_readout(
-                                                        zavDevice,
-                                                        sensor               ,
-                                                        zavDevice.sensor_readouts[sensor]
-                                                        )
-                print( readout_formatted )
+            for sensor in sensor_readouts:
+                formattedReadout = zavDevice.formatSensorReadout( sensor, 
+                                                                  sensor_readouts[sensor] )
+                print( formattedReadout )
             
         return
+
 
     ################################################################################
     # Subcommand: sensor poll                                                      #
@@ -407,18 +287,13 @@ def sensor( Args, zavDevice, show_readouts = True ):
         while ( timeout_ctr <= POLL_TIMEOUT ):
             zavDevice.sendByte( POLL_COMMANDS['REQUEST'] )
             sensorByteData  = zavDevice.readBytes( sensor_poll_frame_size ) 
-            sensor_readouts = get_sensor_readouts(
-                                                zavDevice, 
-                                                selectedSensorNames ,
-                                                sensorByteData 
-                                                 )
-            for sensor in sensor_readouts:
-                readout_formated = format_sensor_readout(
-                                                         zavDevice, 
-                                                         sensor              ,
-                                                         sensor_readouts[sensor] 
-                                                         )
-                print( readout_formated + '\t', end='' )
+            sensorReadouts = zavDevice.getSensorReadouts( selectedSensorNames, 
+                                                          sensorByteData )
+
+            for sensor in sensorReadouts:
+                formattedReadout = zavDevice.formatSensorReadout( sensor, 
+                                                                  sensorReadouts[sensor] )
+                print( formattedReadout + '\t', end='' )
             print()
 
             # Pause for readibility

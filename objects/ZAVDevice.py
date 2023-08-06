@@ -13,8 +13,15 @@
 ####################################################################################
 # Imports                                                                          #
 ####################################################################################
+
+# Standard
 import serial
 import serial.tools.list_ports
+
+# Project
+import binUtil
+import controller
+import sensor_conv
 
 
 ####################################################################################
@@ -34,6 +41,10 @@ import serial.tools.list_ports
 #                                                                                  #
 ####################################################################################
 class ZAVDevice:
+
+    ################################################################################
+    # General Methods                                                              #
+    ################################################################################
     def __init__( self ):
         self.baudrate            = None
         self.comport             = None
@@ -60,6 +71,25 @@ class ZAVDevice:
         self.serialObj.baudrate = self.baudrate
         self.serialObj.port     = self.comport
         self.serialObj.timeout  = self.timeout
+
+	# Set the controller to enable board-specific commands
+    def set_controller(self, controller_name, firmware_name = None ):
+        self.controller = controller_name
+        self.firmware   = firmware_name
+
+	# Reset the controller to disable board-specific commands
+    def reset_controller(self):
+        self.controller    = None
+        self.firmware_name = None
+
+    # Execute a command using the current device connection
+    def execute_command( self, command_callback, args ):
+        command_callback( args, self )
+    
+
+    ################################################################################
+    # Serial Port Configuration Methods                                            #
+    ################################################################################
 
     # Open the serial port
     # returns a boolean variable indicating whether the port
@@ -99,6 +129,11 @@ class ZAVDevice:
 	    for port in available_ports:
 		    available_port_names.append(port.device)
 	    return available_port_names
+    
+
+    ################################################################################
+    # Serial Data Transmission Methods                                             #
+    ################################################################################
 
     # Write a single Byte to the serial port
     def sendByte(self, byte):
@@ -134,20 +169,157 @@ class ZAVDevice:
             for i in range( num_bytes ):
                 rx_bytes.append( self.serialObj.read() )
             return rx_bytes 
+    
 
-	# Set the controller to enable board-specific commands
-    def set_controller(self, controller_name, firmware_name = None ):
-        self.controller = controller_name
-        self.firmware   = firmware_name
+    ################################################################################
+    # Sensor Data Methods                                                          #
+    ################################################################################
 
-	# Reset the controller to disable board-specific commands
-    def reset_controller(self):
-        self.controller    = None
-        self.firmware_name = None
+    # Converts an array of bytes into a dictionary containing the raw sensor 
+    # readouts in integer format                                                 
+    def getRawSensorReadouts( self, sensors, sensor_bytes ):
 
-    # Execute a command using the current device connection
-    def execute_command( self, command_callback, args ):
-        command_callback( args, self )
+        # Sensor readout sizes
+        sensor_size_dict = controller.sensor_sizes[self.controller]
+
+        # Starting index of bytes corresponding to individual 
+        # sensor readout in sensor_bytes array
+        index = 0
+
+        # Result
+        readouts = {}
+        
+        # Convert each sensor readout 
+        for sensor in sensors:
+            size             = sensor_size_dict[sensor]
+            readout_bytes    = sensor_bytes[index:index+size]
+            if ( controller.sensor_formats[self.controller][sensor] == float ):
+                sensor_val = binUtil.byte_array_to_float( readout_bytes )
+            else:
+                sensor_val = binUtil.byte_array_to_int(   readout_bytes )
+            readouts[sensor] = sensor_val
+            index           += size 
+
+        return readouts
+    ## getRawSensorReadouts ##
+
+
+    # Converts raw sensor readouts in integer format into the appropriate format
+    def convRawSensorReadouts( self, raw_readouts ):
+
+        # Conversion functions
+        conv_funcs = controller.sensor_conv_funcs[self.controller]
+
+        # Result
+        readouts = {}
+
+        # Convert each readout
+        for sensor in raw_readouts:
+            if ( conv_funcs[sensor] != None ):
+                readouts[sensor] = conv_funcs[sensor]( raw_readouts[sensor] )
+            else:
+                readouts[sensor] = raw_readouts[sensor]
+        
+        return readouts
+    ## convRawSensorReadouts ##
+
+
+    # Converts a byte array into sensor readouts and converts digital readout
+    def getSensorReadouts( self, sensors, sensor_bytes ):
+
+        # Convert to integer form
+        int_readouts = self.getRawSensorReadouts( sensors, sensor_bytes )
+
+        # Make conversions
+        readouts     = self.convRawSensorReadouts( int_readouts )
+        return readouts
+    ## getSensorReadouts ##
+
+
+    # Formats a sensor readout into a label, rounded readout, and units 
+    def formatSensorReadout( self, sensor, readout ):
+
+        # Readout units
+        units = controller.sensor_units[self.controller][sensor] 
+
+        # Rounded readout
+        if ( units != None ):
+            readout_str = "{:.3f}".format( readout )
+        else:
+            readout_str = str( readout )
+
+        # Concatentate label, readout, and units
+        if ( units != None ):
+            output = sensor + ": " + readout_str + " " + units
+        else:
+            output = sensor + ": " + readout_str
+        return output
+    ## formatSensorReadout ##
+
+
+    # Obtains a frame of sensor data from a controller's flash in byte format
+    def getSensorFrameBytes( self ):
+
+        # Determine the size of the frame
+        frame_size = controller.sensor_frame_sizes[self.controller]
+
+        # Get bytes
+        rx_bytes = self.readBytes( frame_size )
+        return rx_bytes
+    ## getSensorFrameBytes ##
+    
+
+    # Converts a list of sensor frames into measurements
+    def getSensorFrames( self, sensor_frames_bytes, format = 'converted' ):
+
+        # Convert to integer format
+        sensor_frames_int = []
+        for frame in sensor_frames_bytes:
+            sensor_frame_int = []
+            for sensor_byte in frame:
+                sensor_frame_int.append( ord( sensor_byte ) )
+            sensor_frames_int.append( sensor_frame_int )
+
+        # Combine bytes from integer data and convert
+        if ( format == 'converted'):
+            sensor_frames = []
+            for int_frame in sensor_frames_int:
+                sensor_frame = []
+                # Time of frame measurement
+                time = ( ( int_frame[0]       ) + 
+                        ( int_frame[1] << 8  ) + 
+                        ( int_frame[2] << 16 ) +
+                        ( int_frame[3] << 24 ) )
+                # Conversion to seconds
+                sensor_frame.append( sensor_conv.time_millis_to_sec( time ) )
+
+                # Sensor readouts
+                sensor_frame_dict = {}
+                index = 4
+                for i, sensor in enumerate( controller.sensor_sizes[ self.controller ] ):
+                    measurement = 0
+                    float_bytes = []
+                    for byte_num in range( controller.sensor_sizes[self.controller][sensor] ):
+                        if ( controller.sensor_formats[self.controller][sensor] != float ):
+                            measurement += ( int_frame[index + byte_num] << 8*byte_num )
+                        else:
+                            float_bytes.append( ( int_frame[index + byte_num] ).to_bytes(1, 'big' ) ) 
+                    if ( controller.sensor_formats[self.controller][sensor] == float ):
+                        measurement = binUtil.byte_array_to_float( float_bytes )
+                    sensor_frame_dict[sensor] = measurement
+                    index += controller.sensor_sizes[self.controller][sensor]
+                sensor_vals_list = list( self.convRawSensorReadouts( sensor_frame_dict ).values() )
+                for val in sensor_vals_list:
+                    sensor_frame.append( val )
+                sensor_frames.append( sensor_frame )
+            return sensor_frames
+        elif ( format == 'bytes' ):
+            return sensor_frames_int 
+    ## getSensorFrame ##
+
+    ################################################################################
+    # Misc                                                                         #
+    ################################################################################
 
     # Enable/Disbale writing to flash
     def flashWriteEnable( self ):

@@ -86,153 +86,10 @@ STATUS_CODE  = b'\x06'
 EXTRACT_CODE = b'\x07'  
 
 
-
 ####################################################################################
 # Procedures                                                                       #
 ####################################################################################
 
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         get_sensor_frame_bytes                                                   #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#        Obtains a frame of sensor data from a controller's flash in byte format   #
-#                                                                                  #
-####################################################################################
-def get_sensor_frame_bytes( zavDevice ):
-
-    # Determine the size of the frame
-    frame_size = controller.sensor_frame_sizes[zavDevice.controller]
-
-    # Get bytes
-    rx_bytes = zavDevice.readBytes( frame_size )
-    return rx_bytes
-## get_sensor_frame_bytes ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         get_raw_sensor_readouts                                                  #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Converts an array of bytes into a dictionary containing the raw sensor   #
-#       readouts in integer format                                                 #
-#                                                                                  #
-####################################################################################
-def get_raw_sensor_readouts( zavDevice, sensors, sensor_bytes ):
-
-    # Sensor readout sizes
-    sensor_size_dict = controller.sensor_sizes[zavDevice.controller]
-
-    # Starting index of bytes corresponding to individual 
-    # sensor readout in sensor_bytes array
-    index = 0
-
-    # Result
-    readouts = {}
-    
-    # Convert each sensor readout 
-    for sensor in sensors:
-        size             = sensor_size_dict[sensor]
-        readout_bytes    = sensor_bytes[index:index+size]
-        if ( sensor_formats[zavDevice.controller][sensor] == float ):
-            sensor_val = binUtil.byte_array_to_float( readout_bytes )
-        else:
-            sensor_val = binUtil.byte_array_to_int( readout_bytes )
-        readouts[sensor] = sensor_val
-        index           += size 
-
-    return readouts
-# get_raw_sensor_readouts #
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         conv_raw_sensor_readouts                                                 #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Converts raw sensor readouts in integer format into the appropriate      # 
-#         format                                                                   #
-#                                                                                  #
-####################################################################################
-def conv_raw_sensor_readouts( zavDevice, raw_readouts ):
-
-    # Conversion functions
-    conv_funcs = controller.sensor_conv_funcs[zavDevice.controller]
-
-    # Result
-    readouts = {}
-
-    # Convert each readout
-    for sensor in raw_readouts:
-        if ( conv_funcs[sensor] != None ):
-            readouts[sensor] = conv_funcs[sensor]( raw_readouts[sensor] )
-        else:
-            readouts[sensor] = raw_readouts[sensor]
-    
-    return readouts
-## conv_raw_sensor_readouts ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         get_sensor_frames                                                        #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#        Converts a list of sensor frames into measurements                        #
-#                                                                                  #
-####################################################################################
-def get_sensor_frames( zavDevice, sensor_frames_bytes, format = 'converted' ):
-
-    # Convert to integer format
-    sensor_frames_int = []
-    for frame in sensor_frames_bytes:
-        sensor_frame_int = []
-        for sensor_byte in frame:
-            sensor_frame_int.append( ord( sensor_byte ) )
-        sensor_frames_int.append( sensor_frame_int )
-
-    # Combine bytes from integer data and convert
-    if ( format == 'converted'):
-        sensor_frames = []
-        for int_frame in sensor_frames_int:
-            sensor_frame = []
-            # Time of frame measurement
-            time = ( ( int_frame[0]       ) + 
-                     ( int_frame[1] << 8  ) + 
-                     ( int_frame[2] << 16 ) +
-                     ( int_frame[3] << 24 ) )
-            # Conversion to seconds
-            sensor_frame.append( sensor_conv.time_millis_to_sec( time ) )
-
-            # Sensor readouts
-            sensor_frame_dict = {}
-            index = 4
-            for i, sensor in enumerate( controller.sensor_sizes[ zavDevice.controller ] ):
-                measurement = 0
-                float_bytes = []
-                for byte_num in range( controller.sensor_sizes[zavDevice.controller][sensor] ):
-                    if ( controller.sensor_formats[zavDevice.controller][sensor] != float ):
-                        measurement += ( int_frame[index + byte_num] << 8*byte_num )
-                    else:
-                        float_bytes.append( ( int_frame[index + byte_num] ).to_bytes(1, 'big' ) ) 
-                if ( controller.sensor_formats[zavDevice.controller][sensor] == float ):
-                    measurement = byte_array_to_float( float_bytes )
-                sensor_frame_dict[sensor] = measurement
-                index += controller.sensor_sizes[zavDevice.controller][sensor]
-            sensor_vals_list = list( conv_raw_sensor_readouts( zavDevice, sensor_frame_dict ).values() )
-            for val in sensor_vals_list:
-                sensor_frame.append( val )
-            sensor_frames.append( sensor_frame )
-        return sensor_frames
-    elif ( format == 'bytes' ):
-        return sensor_frames_int 
-## get_sensor_frame ##
 
 
 ####################################################################################
@@ -415,6 +272,7 @@ def flash( Args, zavDevice ):
         commands.display_help_info('flash')
         return
 
+
     ################################################################################
     # Subcommand: flash enable                                                     #
     ################################################################################
@@ -428,6 +286,7 @@ def flash( Args, zavDevice ):
         zavDevice.flashWriteEnable()
         return
 
+
     ################################################################################
     # Subcommand: flash disable                                                    #
     ################################################################################
@@ -439,6 +298,7 @@ def flash( Args, zavDevice ):
 
         zavDevice.flashWriteDisable()
         return
+
 
     ################################################################################
     # Subcommand: flash status                                                     #
@@ -471,6 +331,7 @@ def flash( Args, zavDevice ):
             print( )
 
         return
+
 
     ################################################################################
     # Subcommand: flash write                                                      #
@@ -601,7 +462,7 @@ def flash( Args, zavDevice ):
         for i in range( EXTRACT_NUM_FRAMES ):
             if ( i%100 == 0 ):
                 print( "Reading block " + str(i) + "..."  )
-            rx_sensor_frame_block = get_sensor_frame_bytes( zavDevice )
+            rx_sensor_frame_block = zavDevice.getSensorFrameBytes()
             rx_byte_blocks.append( rx_sensor_frame_block )
         
         # Receive the unused bytes
@@ -611,7 +472,7 @@ def flash( Args, zavDevice ):
         extract_time = time.perf_counter() - start_time
 
         # Convert the data from bytes to measurement readouts
-        sensor_frames = get_sensor_frames( zavDevice, rx_byte_blocks )
+        sensor_frames = zavDevice.getSensorFrames( rx_byte_blocks )
 
         # Set Create Output Data folder -> output/extract/controller/date
         if ( not os.path.exists( "output" ) ):
