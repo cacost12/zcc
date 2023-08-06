@@ -15,6 +15,7 @@
 import config
 import commands
 import messageUtil
+import validator
 
 
 ####################################################################################
@@ -89,7 +90,7 @@ def ignite( Args, zavDevice ):
     # Basic Inputs Parsing                                                         #
     ################################################################################
 
-    parse_check = commands.parseArgs(
+    parse_check = validator.parseArgs(
                                     Args,
                                     MAX_ARGS,
                                     INPUTS,

@@ -24,6 +24,7 @@ import config
 import commands
 import messageUtil
 import sensor_conv
+import validator
 import zavController
 
 
@@ -92,7 +93,6 @@ EXTRACT_CODE = b'\x07'
 ####################################################################################
 
 
-
 ####################################################################################
 #                                                                                  #
 # PROCEDURE:                                                                       #
@@ -125,7 +125,7 @@ def flash( Args, zavDevice ):
     ################################################################################
     # Basic Inputs Parsing                                                         #
     ################################################################################
-    parse_check = commands.parseArgs(
+    parse_check = validator.parseArgs(
                             Args,
                             MAX_ARGS,
                             INPUTS,

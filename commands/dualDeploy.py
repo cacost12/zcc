@@ -139,7 +139,7 @@ def dual_deploy( Args, zavDevice ):
     ################################################################################
     # Basic inputs parsing                                                         #
     ################################################################################
-    parse_check = commands.parseArgs( Args              ,
+    parse_check = validator.parseArgs( Args              ,
                                       max_args          ,
                                       dual_deploy_inputs,
                                       command_type )

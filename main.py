@@ -31,6 +31,7 @@ import ZAVDevice
 
 # Commands
 import clear
+import comports
 import exitCommand
 import flash
 import helpCommand
@@ -48,7 +49,7 @@ command_callbacks = {
                 "exit"       : exitCommand.exitFunc             ,
                 "help"       : helpCommand.helpFunc             ,
                 "clear"      : clear.clearConsole               ,
-                "comports"   : commands.comports                ,
+                "comports"   : comports.comports                ,
                 "ping"       : commands.ping                    ,
                 "connect"    : commands.connect                 ,
                 "ignite"     : ignite.ignite                    ,
@@ -132,9 +133,10 @@ if __name__ == '__main__':
 
         # Execute Command
         zavDevice.execute_command( command_callbacks[userCommand], userArgs )
-## parseInput ##
+
+## main ##
 
 
 ####################################################################################
-# END OF FILE
+# END OF FILE                                                                      #
 ####################################################################################

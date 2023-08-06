@@ -21,6 +21,7 @@ import binUtil
 import commands
 import config
 import messageUtil
+import validator
 import zavController
 
 
@@ -167,7 +168,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
     ################################################################################
     # Basic Inputs Parsing                                                         #
     ################################################################################
-    parse_check = commands.parseArgs(
+    parse_check = validator.parseArgs(
                            Args,
                            MAX_ARGS,
                            INPUTS,
