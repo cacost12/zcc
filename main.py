@@ -23,6 +23,7 @@ import time
 # Setup project directory structure
 sys.path.insert( 0, './commands')
 sys.path.insert( 0, './objects' )
+sys.path.insert( 0, './util'    )
 
 # General Project
 import config  
