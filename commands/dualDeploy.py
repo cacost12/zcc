@@ -1,9 +1,9 @@
-#################################################################################### 
-#                                                                                  # 
-# dualDeploy.py -- dual-deploy command, programs the flight computer and retrieves # 
+####################################################################################
+#                                                                                  #
+# dualDeploy.py -- dual-deploy command, programs the flight computer and retrieves #
 #                  flight data from on board flash                                 #
 #                                                                                  #
-# Author: Colton Acosta                                                            # 
+# Author: Colton Acosta                                                            #
 # Date: 8/6/2023                                                                   #
 # Zenith Avionics                                                                  #
 #                                                                                  #
