@@ -17,7 +17,6 @@
 import datetime
 import os
 import time
-import struct
 
 # Project
 import binUtil
