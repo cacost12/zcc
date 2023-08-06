@@ -22,6 +22,24 @@
 PASS = True
 FAIL = False
 
+# List of terminal commands
+commandCallbacks = [ 
+                "exit"        ,
+                "help"        ,
+                "clear"       ,
+                "comports"    ,
+                "ping"        ,
+                "connect"     ,
+                "ignite"      ,
+                "flash"       ,
+                "sensor"      ,
+                "dual-deploy" 
+]
+
+# Display Constants
+TERMINAL_PROMPT              = "ZCC> "
+UNRECOGNIZED_COMMAND_MESSAGE = "Error: Unsupported command"
+
 
 ####################################################################################
 # Procedures                                                                       #
@@ -139,6 +157,42 @@ def parseArgs(
 	# User input passes all checks	
 	return PASS
 ## parseArgs ##
+
+
+####################################################################################
+#                                                                                  #
+# PROCEDURE:                                                                       #
+# 		parseInput                                                                 #
+#                                                                                  #
+# DESCRIPTION:                                                                     #
+# 		checks user input against command list options                             #
+#                                                                                  #
+####################################################################################
+def parseInput( userin ): 
+
+    # Get rid of any whitespace
+    userin.strip()
+
+    # Split the input into commands and arguments
+    userin = userin.split() 
+    try:
+        userCommand = userin[0]
+        CommandArgs = userin[1:] 
+    except TypeError:
+        print( UNRECOGNIZED_COMMAND_MESSAGE )
+        userin = input( TERMINAL_PROMPT )
+        parseInput(userin)
+
+    # Check if user input corresponds to a function
+    for command in commandCallbacks: 
+        if userCommand == command:
+           return userin
+
+    # User input doesn't correspond to a command
+    print( UNRECOGNIZED_COMMAND_MESSAGE )
+    userin = input( TERMINAL_PROMPT )
+    return parseInput(userin)
+## parseInput ##
 
 
 ##################################################################################

@@ -26,6 +26,7 @@ sys.path.insert( 0, './objects' )
 
 # General Project
 import config  
+import validator
 import ZAVDevice
 
 # Commands
@@ -65,47 +66,6 @@ UNRECOGNIZED_COMMAND_MESSAGE = "Error: Unsupported command"
 
 
 ####################################################################################
-# Procedures                                                                       #
-####################################################################################
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-# 		parseInput                                                                 #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-# 		checks user input against command list options                             #
-#                                                                                  #
-####################################################################################
-def parseInput( userin ): 
-
-    # Get rid of any whitespace
-    userin.strip()
-
-    # Split the input into commands and arguments
-    userin = userin.split() 
-    try:
-        userCommand = userin[0]
-        CommandArgs = userin[1:] 
-    except TypeError:
-        print( UNRECOGNIZED_COMMAND_MESSAGE )
-        userin = input( TERMINAL_PROMPT )
-        parseInput(userin)
-
-    # Check if user input corresponds to a function
-    for command in command_callbacks: 
-        if userCommand == command:
-           return userin
-
-    # User input doesn't correspond to a command
-    print( UNRECOGNIZED_COMMAND_MESSAGE )
-    userin = input( TERMINAL_PROMPT )
-    return parseInput(userin)
-## parseInput ##
-
-
-####################################################################################
 # Application Entry Point                                                          #
 ####################################################################################
 if __name__ == '__main__':
@@ -128,12 +88,12 @@ if __name__ == '__main__':
         userin         = input( TERMINAL_PROMPT )
 
         # Parse command
-        userin_clean   = parseInput( userin )
-        userCommand    = userin_clean[0]
-        userArgs       = userin_clean[1:]
+        userinCleaned = validator.parseInput( userin )
+        command       = userinCleaned[0]
+        args          = userinCleaned[1:]
 
         # Execute Command
-        zavDevice.execute_command( command_callbacks[userCommand], userArgs )
+        zavDevice.execute_command( command_callbacks[command], args )
 
 ## main ##
 
