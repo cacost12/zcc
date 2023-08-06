@@ -48,7 +48,7 @@ import dualDeploy
 ####################################################################################
 
 # List of terminal commands
-command_callbacks = { 
+commandCallbacks = { 
                 "exit"       : exitCommand.exitFunc,
                 "help"       : helpCommand.helpFunc,
                 "clear"      : clear.clearConsole  ,
@@ -94,7 +94,7 @@ if __name__ == '__main__':
         args          = userinCleaned[1:]
 
         # Execute Command
-        zavDevice.execute_command( command_callbacks[command], args )
+        zavDevice.execute_command( commandCallbacks[command], args )
 
 ## main ##
 
