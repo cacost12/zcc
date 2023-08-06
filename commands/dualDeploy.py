@@ -95,63 +95,6 @@ def sensor_extract_data_filter( data ):
 
 
 ####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         get_sensor_frames                                                        #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#        Converts a list of sensor frames into measurements                        #
-#                                                                                  #
-####################################################################################
-def get_sensor_frames( controller, sensor_frames_bytes, format = 'converted' ):
-
-    # Convert to integer format
-    sensor_frames_int = []
-    for frame in sensor_frames_bytes:
-        sensor_frame_int = []
-        for sensor_byte in frame:
-            sensor_frame_int.append( ord( sensor_byte ) )
-        sensor_frames_int.append( sensor_frame_int )
-
-    # Combine bytes from integer data and convert
-    if ( format == 'converted'):
-        sensor_frames = []
-        for int_frame in sensor_frames_int:
-            sensor_frame = []
-            # Time of frame measurement
-            time = ( ( int_frame[0]       ) + 
-                     ( int_frame[1] << 8  ) + 
-                     ( int_frame[2] << 16 ) +
-                     ( int_frame[3] << 24 ) )
-            # Conversion to seconds
-            sensor_frame.append( sensor_conv.time_millis_to_sec( time ) )
-
-            # Sensor readouts
-            sensor_frame_dict = {}
-            index = 4
-            for i, sensor in enumerate( sensor_sizes[ controller ] ):
-                measurement = 0
-                float_bytes = []
-                for byte_num in range( sensor_sizes[controller][sensor] ):
-                    if ( sensor_formats[controller][sensor] != float ):
-                        measurement += ( int_frame[index + byte_num] << 8*byte_num )
-                    else:
-                        float_bytes.append( ( int_frame[index + byte_num] ).to_bytes(1, 'big' ) ) 
-                if ( sensor_formats[controller][sensor] == float ):
-                    measurement = byte_array_to_float( float_bytes )
-                sensor_frame_dict[sensor] = measurement
-                index += sensor_sizes[controller][sensor]
-            sensor_vals_list = list( conv_raw_sensor_readouts( controller, sensor_frame_dict ).values() )
-            for val in sensor_vals_list:
-                sensor_frame.append( val )
-            sensor_frames.append( sensor_frame )
-        return sensor_frames
-    elif ( format == 'bytes' ):
-        return sensor_frames_int 
-## get_sensor_frame ##
-
-
-####################################################################################
 # Commands                                                                         #
 ####################################################################################
 
@@ -296,8 +239,7 @@ def dual_deploy( Args, zavDevice ):
             rx_blocks.append( rx_frame_block )
         
         # Format the flight data
-        sensor_frames          = get_sensor_frames( "Flight Computer Lite (A0007 Rev 1.0)", 
-                                                     rx_blocks )
+        sensor_frames = zavDevice.getSensorFrames( rx_blocks )
         sensor_frames_filtered = sensor_extract_data_filter( sensor_frames )
 
         # Croeate the output directory
