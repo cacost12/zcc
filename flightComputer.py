@@ -21,9 +21,8 @@ import datetime
 from   matplotlib import pyplot as plt
 
 # Project imports
+import binUtil
 from   config      import *
-from   hw_commands import byte_array_to_int
-from   hw_commands import byte_array_to_float
 from   hw_commands import get_sensor_frames
 from   hw_commands import sensor_extract_data_filter
 import commands
@@ -127,18 +126,18 @@ def dual_deploy( Args, zavDevice ):
         zavDevice.sendByte( sub_opcodes['status'] )
 
         # Receive the recovery programmed settings
-        main_alt     = byte_array_to_int( zavDevice.readBytes( 4 ) )
-        drogue_delay = byte_array_to_int( zavDevice.readBytes( 4 ) )
+        main_alt     = binUtil.byte_array_to_int( zavDevice.readBytes( 4 ) )
+        drogue_delay = binUtil.byte_array_to_int( zavDevice.readBytes( 4 ) )
 
         # Receive the ground pressure
-        ground_press = byte_array_to_float( zavDevice.readBytes( 4 ) )
+        ground_press = binUtil.byte_array_to_float( zavDevice.readBytes( 4 ) )
         ground_press /= 1000
 
         # Receive the sample rates, ms/sample
-        ld_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
-        ad_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
-        md_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
-        zd_sample_rate = byte_array_to_int( zavDevice.readBytes( 4 ) )
+        ld_sample_rate = binUtil.byte_array_to_int( zavDevice.readBytes( 4 ) )
+        ad_sample_rate = binUtil.byte_array_to_int( zavDevice.readBytes( 4 ) )
+        md_sample_rate = binUtil.byte_array_to_int( zavDevice.readBytes( 4 ) )
+        zd_sample_rate = binUtil.byte_array_to_int( zavDevice.readBytes( 4 ) )
 
         # Display Results
         print( "Main Deployment Altitude        : " + str( main_alt       ) + " ft"  )
@@ -165,16 +164,16 @@ def dual_deploy( Args, zavDevice ):
                    "available" )
 
         # Receive the recovery programmed settings
-        main_alt     = byte_array_to_int( serialObj.readBytes( 4 ) )
-        drogue_delay = byte_array_to_int( serialObj.readBytes( 4 ) )
+        main_alt     = binUtil.byte_array_to_int( serialObj.readBytes( 4 ) )
+        drogue_delay = binUtil.byte_array_to_int( serialObj.readBytes( 4 ) )
 
         # Receive the flight events
-        main_deploy_time   = byte_array_to_int( serialObj.readBytes( 4 ) )
-        drogue_deploy_time = byte_array_to_int( serialObj.readBytes( 4 ) )
-        land_time          = byte_array_to_int( serialObj.readBytes( 4 ) )
+        main_deploy_time   = binUtil.byte_array_to_int( serialObj.readBytes( 4 ) )
+        drogue_deploy_time = binUtil.byte_array_to_int( serialObj.readBytes( 4 ) )
+        land_time          = binUtil.byte_array_to_int( serialObj.readBytes( 4 ) )
 
         # Receive the ground pressure
-        ground_press       = byte_array_to_float( serialObj.readBytes( 4 ) )
+        ground_press       = binUtil.byte_array_to_float( serialObj.readBytes( 4 ) )
         ground_press      /= 1000
 
         # Receive the flight data

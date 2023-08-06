@@ -18,6 +18,7 @@ import struct
 import time
 
 # Project
+import binUtil
 import commands
 import controller
 import config
@@ -87,48 +88,6 @@ POLL_TIMEOUT = 100
 ####################################################################################
 #                                                                                  #
 # PROCEDURE:                                                                       #
-#         byte_array_to_int                                                        #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Returns an integer corresponding the hex number passed into the function #
-#       as a byte array. Assumes least significant bytes are first                 #
-#                                                                                  #
-####################################################################################
-def byte_array_to_int( byte_array ):
-    int_val   = 0 # Intermediate computation value
-    result    = 0 # Final result integer
-    num_bytes = len( byte_array )
-    for i, byte in enumerate( byte_array ):
-        int_val = int.from_bytes( byte, 'big')
-        int_val = int_val << 8*i
-        result += int_val
-    return result
-## byte_array_to_int ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         byte_array_to_float                                                      #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Returns an floating point number corresponding the hex number passed     # 
-#         into the function as a byte array. Assumes least significant bytes are   # 
-#         first                                                                    #
-#                                                                                  #
-####################################################################################
-def byte_array_to_float( byte_array ):
-    # Check to NaN
-    if ( byte_array == [b'\xFF', b'\xFF', b'\xFF', b'\xFF'] ):
-        byte_array = [b'\x00', b'\x00', b'\x00', b'\x00']
-    byte_array_joined = b''.join( byte_array )
-    return struct.unpack( 'f', byte_array_joined )[0]
-## byte_array_to_float ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
 #         get_raw_sensor_readouts                                                  #
 #                                                                                  #
 # DESCRIPTION:                                                                     #
@@ -153,9 +112,9 @@ def get_raw_sensor_readouts( zavDevice, sensors, sensor_bytes ):
         size             = sensor_size_dict[sensor]
         readout_bytes    = sensor_bytes[index:index+size]
         if ( controller.sensor_formats[zavDevice.controller][sensor] == float ):
-            sensor_val = byte_array_to_float( readout_bytes )
+            sensor_val = binUtil.byte_array_to_float( readout_bytes )
         else:
-            sensor_val = byte_array_to_int(   readout_bytes )
+            sensor_val = binUtil.byte_array_to_int(   readout_bytes )
         readouts[sensor] = sensor_val
         index           += size 
 

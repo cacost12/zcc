@@ -20,6 +20,7 @@ import time
 import struct
 
 # Project
+import binUtil
 import config
 import commands
 import controller
@@ -95,23 +96,6 @@ EXTRACT_CODE = b'\x07'
 ####################################################################################
 #                                                                                  #
 # PROCEDURE:                                                                       #
-#         get_bit                                                                  #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         extracts a specific bit from an integer                                  #
-#                                                                                  #
-####################################################################################
-def get_bit( num, bit_index ):
-    if ( num & ( 1 << bit_index ) ):
-        return 1
-    else:    
-        return 0
-## get_bit ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
 #         get_sensor_frame_bytes                                                   #
 #                                                                                  #
 # DESCRIPTION:                                                                     #
@@ -127,26 +111,6 @@ def get_sensor_frame_bytes( zavDevice ):
     rx_bytes = zavDevice.readBytes( frame_size )
     return rx_bytes
 ## get_sensor_frame_bytes ##
-
-
-####################################################################################
-#                                                                                  #
-# PROCEDURE:                                                                       #
-#         byte_array_to_float                                                      #
-#                                                                                  #
-# DESCRIPTION:                                                                     #
-#         Returns an floating point number corresponding the hex number passed     # 
-#         into the function as a byte array. Assumes least significant bytes are   # 
-#         first                                                                    #
-#                                                                                  #
-####################################################################################
-def byte_array_to_float( byte_array ):
-    # Check to NaN
-    if ( byte_array == [b'\xFF', b'\xFF', b'\xFF', b'\xFF'] ):
-        byte_array = [b'\x00', b'\x00', b'\x00', b'\x00']
-    byte_array_joined = b''.join( byte_array )
-    return struct.unpack( 'f', byte_array_joined )[0]
-## byte_array_to_float ##
 
 
 ####################################################################################
@@ -176,9 +140,9 @@ def get_raw_sensor_readouts( zavDevice, sensors, sensor_bytes ):
         size             = sensor_size_dict[sensor]
         readout_bytes    = sensor_bytes[index:index+size]
         if ( sensor_formats[zavDevice.controller][sensor] == float ):
-            sensor_val = byte_array_to_float( readout_bytes )
+            sensor_val = binUtil.byte_array_to_float( readout_bytes )
         else:
-            sensor_val = byte_array_to_int(   readout_bytes )
+            sensor_val = binUtil.byte_array_to_int( readout_bytes )
         readouts[sensor] = sensor_val
         index           += size 
 
@@ -497,14 +461,14 @@ def flash( Args, zavDevice ):
                   "controller")
         else:
             print("Status register contents: \n") 
-            print( "BUSY: ", get_bit( status_register_int, 0 ) )
-            print( "WEL : ", get_bit( status_register_int, 1 ) )
-            print( "BP0 : ", get_bit( status_register_int, 2 ) )
-            print( "BP1 : ", get_bit( status_register_int, 3 ) )
-            print( "BP2 : ", get_bit( status_register_int, 4 ) )
-            print( "BP3 : ", get_bit( status_register_int, 5 ) )
-            print( "AAI : ", get_bit( status_register_int, 6 ) )
-            print( "BPL : ", get_bit( status_register_int, 7 ) )
+            print( "BUSY: ", binUtil.get_bit( status_register_int, 0 ) )
+            print( "WEL : ", binUtil.get_bit( status_register_int, 1 ) )
+            print( "BP0 : ", binUtil.get_bit( status_register_int, 2 ) )
+            print( "BP1 : ", binUtil.get_bit( status_register_int, 3 ) )
+            print( "BP2 : ", binUtil.get_bit( status_register_int, 4 ) )
+            print( "BP3 : ", binUtil.get_bit( status_register_int, 5 ) )
+            print( "AAI : ", binUtil.get_bit( status_register_int, 6 ) )
+            print( "BPL : ", binUtil.get_bit( status_register_int, 7 ) )
             print( )
 
         return
