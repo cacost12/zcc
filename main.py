@@ -32,6 +32,7 @@ import ZAVDevice
 # Commands
 import clear
 import comports
+import connect
 import exitCommand
 import flash
 import helpCommand
@@ -51,7 +52,7 @@ command_callbacks = {
                 "clear"      : clear.clearConsole               ,
                 "comports"   : comports.comports                ,
                 "ping"       : commands.ping                    ,
-                "connect"    : commands.connect                 ,
+                "connect"    : connect.connect                  ,
                 "ignite"     : ignite.ignite                    ,
                 "flash"      : flash.flash                      ,
                 "sensor"     : sensor.sensor                    ,
@@ -119,7 +120,7 @@ if __name__ == '__main__':
             # Connect
             port_num = port.device
             connect_args  = [ '-p', port_num]
-            commands.connect( connect_args, zavDevice )
+            connect.connect( connect_args, zavDevice )
             
     # Display command prompt
     while( True ):
