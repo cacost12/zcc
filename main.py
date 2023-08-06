@@ -26,11 +26,14 @@ sys.path.insert( 0, './objects' )
 
 # Project
 import commands         # general terminal commands
+
 import exitCommand
 import flash
+import helpCommand
 import ignite
 import sensor
 import dualDeploy
+
 from   config import *  # global settings
 import ZAVDevice
 
@@ -42,7 +45,7 @@ import ZAVDevice
 # List of terminal commands
 command_callbacks = { 
                 "exit"       : exitCommand.exitFunc             ,
-                "help"       : commands.helpFunc                ,
+                "help"       : helpCommand.helpFunc             ,
                 "clear"      : commands.clearConsole            ,
                 "comports"   : commands.comports                ,
                 "ping"       : commands.ping                    ,

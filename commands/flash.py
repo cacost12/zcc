@@ -22,8 +22,9 @@ import time
 import binUtil
 import config
 import commands
-import zavController
+import messageUtil
 import sensor_conv
+import zavController
 
 
 ####################################################################################
@@ -269,7 +270,7 @@ def flash( Args, zavDevice ):
     # Subcommand: flash help                                                       #
     ################################################################################
     if ( subcommand == "help"):
-        commands.display_help_info('flash')
+        messageUtil.display_help_info('flash')
         return
 
 
@@ -515,7 +516,7 @@ def flash( Args, zavDevice ):
     ################################################################################
     else:
         print("Error: unknown option passed to connect function")    
-        commands.error_msg()
+        messageUtil.error_msg()
         return
 
 ## flash ##

@@ -19,8 +19,9 @@ import time
 # Project
 import binUtil
 import commands
-import zavController
 import config
+import messageUtil
+import zavController
 
 
 ####################################################################################
@@ -227,7 +228,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
     # Subcommand: sensor help                                                      #
     ################################################################################
     if   ( subcommand == "help" ):
-        commands.display_help_info( "sensor" )
+        messageUtil.display_help_info( "sensor" )
         return
 
 
@@ -379,7 +380,7 @@ def sensor( Args, zavDevice, show_readouts = True ):
     else:
         print( "Error: Unknown subcommand passed to sensor " +
                "function. " )
-        commands.error_msg()
+        messageUtil.error_msg()
         return
 ## sensor ##
 

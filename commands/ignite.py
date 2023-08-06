@@ -14,6 +14,7 @@
 ####################################################################################
 import config
 import commands
+import messageUtil
 
 
 ####################################################################################
@@ -107,7 +108,7 @@ def ignite( Args, zavDevice ):
     # Subcommand: ignite help                                                      #
     ################################################################################
     if ( subcommand == "help" ):
-        commands.display_help_info( 'ignite' )
+        messageUtil.display_help_info( 'ignite' )
         return
 
 
@@ -185,7 +186,7 @@ def ignite( Args, zavDevice ):
     else:
         print("Error: unknown subcommand passed to ignite " +
               "function")    
-        commands.error_msg()
+        messageUtil.error_msg()
         return
 
 ## ignite ##
