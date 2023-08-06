@@ -26,11 +26,10 @@ import sys
 sys.path.insert( 0, './commands')
 
 import commands         # general terminal commands
-import hw_commands      # general hardware commands
 import flash
 import ignite
 import sensor
-import flightComputer   # flight computer commands
+import dualDeploy
 from   config import *  # global settings
 
 
@@ -49,7 +48,7 @@ command_callbacks = {
                 "ignite"     : ignite.ignite                    ,
                 "flash"      : flash.flash                      ,
                 "sensor"     : sensor.sensor                    ,
-                "dual-deploy": flightComputer.dual_deploy
+                "dual-deploy": dualDeploy.dual_deploy
                 }
 
 # Display Constants
@@ -197,7 +196,6 @@ class ZAVDevice:
 
     def getFlashWriteProtection( self ):
         return self.flash_write_enabled
-
 ## class ZAVDevice ##
 
 

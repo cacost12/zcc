@@ -1,9 +1,10 @@
 #################################################################################### 
 #                                                                                  # 
-# flightComputer.py -- module with command line functions specific to the flight   # 
-#                      computer                                                    #
+# dualDeploy.py -- dual-deploy command, programs the flight computer and retrieves # 
+#                  flight data from on board flash                                 #
+#                                                                                  #
 # Author: Colton Acosta                                                            # 
-# Date: 7/30/2023                                                                  #
+# Date: 8/6/2023                                                                   #
 # Zenith Avionics                                                                  #
 #                                                                                  #
 ####################################################################################
@@ -23,8 +24,6 @@ from   matplotlib import pyplot as plt
 # Project imports
 import binUtil
 from   config      import *
-from   hw_commands import get_sensor_frames
-from   hw_commands import sensor_extract_data_filter
 import commands
 import sensor_conv
 
@@ -38,6 +37,118 @@ if ( zav_debug ):
     DEFAULT_TIMEOUT = 100 # 100 second timeout
 else:
     DEFAULT_TIMEOUT = 1   # 1 second timeout
+
+
+####################################################################################
+# Procedures                                                                       #
+####################################################################################
+
+
+####################################################################################
+#                                                                                  #
+# PROCEDURE:                                                                       #
+#         sensor_extract_data_filter                                               #
+#                                                                                  #
+# DESCRIPTION:                                                                     #
+#       Finds the end of valid data extracted from flash extract and return a list #
+#       containing only good data                                                  #
+#                                                                                  #
+####################################################################################
+def sensor_extract_data_filter( data ):
+
+    # Indices of beginning and end of good data 
+    start_index = 0
+    end_index   = len( data ) - 1
+
+    # Search exit condition
+    exit = False
+
+    # Search index
+    search_index = 0
+    
+    # Begin binary search
+    while( not exit ):
+        # Set search index
+        search_index = ( (end_index - start_index)//2 ) + start_index
+
+        # Check if two consecutive rows are identically equal
+        rows_equal = ( data[search_index] == data[search_index+1] )
+
+        # Check for exit condition
+        if   (   search_index       == start_index ):
+            if ( rows_equal ):
+                return None
+            else:
+                return data[0:search_index-1]
+        elif ( ( search_index + 1 ) == end_index   ):
+            if ( rows_equal ):
+                return data[0:start_index-1]
+            else:
+                return data[0:end_index-1]
+        else: # No exit condfition
+            # Update search range
+            if ( rows_equal ):
+                end_index = search_index
+            else:
+                start_index = search_index
+## sensor_extract_data_filter ## 
+
+
+####################################################################################
+#                                                                                  #
+# PROCEDURE:                                                                       #
+#         get_sensor_frames                                                        #
+#                                                                                  #
+# DESCRIPTION:                                                                     #
+#        Converts a list of sensor frames into measurements                        #
+#                                                                                  #
+####################################################################################
+def get_sensor_frames( controller, sensor_frames_bytes, format = 'converted' ):
+
+    # Convert to integer format
+    sensor_frames_int = []
+    for frame in sensor_frames_bytes:
+        sensor_frame_int = []
+        for sensor_byte in frame:
+            sensor_frame_int.append( ord( sensor_byte ) )
+        sensor_frames_int.append( sensor_frame_int )
+
+    # Combine bytes from integer data and convert
+    if ( format == 'converted'):
+        sensor_frames = []
+        for int_frame in sensor_frames_int:
+            sensor_frame = []
+            # Time of frame measurement
+            time = ( ( int_frame[0]       ) + 
+                     ( int_frame[1] << 8  ) + 
+                     ( int_frame[2] << 16 ) +
+                     ( int_frame[3] << 24 ) )
+            # Conversion to seconds
+            sensor_frame.append( sensor_conv.time_millis_to_sec( time ) )
+
+            # Sensor readouts
+            sensor_frame_dict = {}
+            index = 4
+            for i, sensor in enumerate( sensor_sizes[ controller ] ):
+                measurement = 0
+                float_bytes = []
+                for byte_num in range( sensor_sizes[controller][sensor] ):
+                    if ( sensor_formats[controller][sensor] != float ):
+                        measurement += ( int_frame[index + byte_num] << 8*byte_num )
+                    else:
+                        float_bytes.append( ( int_frame[index + byte_num] ).to_bytes(1, 'big' ) ) 
+                if ( sensor_formats[controller][sensor] == float ):
+                    measurement = byte_array_to_float( float_bytes )
+                sensor_frame_dict[sensor] = measurement
+                index += sensor_sizes[controller][sensor]
+            sensor_vals_list = list( conv_raw_sensor_readouts( controller, sensor_frame_dict ).values() )
+            for val in sensor_vals_list:
+                sensor_frame.append( val )
+            sensor_frames.append( sensor_frame )
+        return sensor_frames
+    elif ( format == 'bytes' ):
+        return sensor_frames_int 
+## get_sensor_frame ##
 
 
 ####################################################################################
