@@ -25,7 +25,7 @@ sys.path.insert( 0, './commands')
 sys.path.insert( 0, './objects' )
 
 # General Project
-from   config import * 
+import config  
 import ZAVDevice
 
 # Commands
