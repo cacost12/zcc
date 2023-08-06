@@ -26,6 +26,7 @@ sys.path.insert( 0, './objects' )
 
 # Project
 import commands         # general terminal commands
+import exitCommand
 import flash
 import ignite
 import sensor
@@ -40,7 +41,7 @@ import ZAVDevice
 
 # List of terminal commands
 command_callbacks = { 
-                "exit"       : commands.exitFunc                ,
+                "exit"       : exitCommand.exitFunc             ,
                 "help"       : commands.helpFunc                ,
                 "clear"      : commands.clearConsole            ,
                 "comports"   : commands.comports                ,
